@@ -12,7 +12,7 @@ namespace SkillRadar.Console.Services
         public async Task GenerateConsoleReportAsync(TrendReport report)
         {
             var output = GenerateReportContent(report);
-            Console.WriteLine(output);
+            System.Console.WriteLine(output);
         }
 
         public async Task GenerateFileReportAsync(TrendReport report, string filePath, string format = "markdown")
@@ -25,7 +25,7 @@ namespace SkillRadar.Console.Services
             };
 
             await File.WriteAllTextAsync(filePath, content, Encoding.UTF8);
-            Console.WriteLine($"Report saved to: {filePath}");
+            System.Console.WriteLine($"Report saved to: {filePath}");
         }
 
         private string GenerateReportContent(TrendReport report)

@@ -16,6 +16,10 @@ namespace SkillRadar.Console
             System.Console.WriteLine("================================================");
             System.Console.WriteLine();
 
+            // Load environment variables from .env file
+            EnvironmentLoader.LoadFromFile();
+            System.Console.WriteLine();
+
             try
             {
                 var config = await LoadConfigurationAsync();
@@ -169,8 +173,8 @@ namespace SkillRadar.Console
         private static DateTime GetWeekStart()
         {
             var today = DateTime.Today;
-            var daysUntilSunday = ((int)DayOfWeek.Sunday - (int)today.DayOfWeek + 7) % 7;
-            return today.AddDays(-daysUntilSunday - 7); // Previous Sunday
+            var daysSinceSunday = ((int)today.DayOfWeek - (int)DayOfWeek.Sunday + 7) % 7;
+            return today.AddDays(-daysSinceSunday); // This past Sunday
         }
 
         private static DateTime GetWeekEnd(DateTime weekStart)

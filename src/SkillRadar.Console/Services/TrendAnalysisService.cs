@@ -176,7 +176,7 @@ Generate a concise key insight (1-2 sentences) about the current trend or develo
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error generating insight for {keyword}: {ex.Message}");
+                System.Console.WriteLine($"Error generating insight for {keyword}: {ex.Message}");
                 return $"Growing interest in {keyword} with {relatedArticles.Count} related articles this week";
             }
         }
@@ -203,7 +203,7 @@ Suggest a specific, actionable learning recommendation (1 sentence) for this use
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error generating learning recommendation for {keyword}: {ex.Message}");
+                System.Console.WriteLine($"Error generating learning recommendation for {keyword}: {ex.Message}");
                 return $"Consider exploring {keyword} fundamentals and practical applications";
             }
         }
@@ -249,7 +249,7 @@ Format: 'Focus area: X (estimated Y hours) - Outcome description'";
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error generating detailed learning recommendation for {trend.Name}: {ex.Message}");
+                System.Console.WriteLine($"Error generating detailed learning recommendation for {trend.Name}: {ex.Message}");
                 return $"Deep dive: {trend.Name} (estimated 4-6 hours) - Focus on practical implementation";
             }
         }
@@ -278,7 +278,7 @@ Generate a concise weekly summary (2-3 sentences) highlighting the most importan
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error generating weekly summary: {ex.Message}");
+                System.Console.WriteLine($"Error generating weekly summary: {ex.Message}");
                 return $"This week's technology landscape focused on key developments across {topTrends.Count} major areas.";
             }
         }
@@ -321,13 +321,13 @@ Generate a concise weekly summary (2-3 sentences) highlighting the most importan
                 }
                 else
                 {
-                    Console.WriteLine($"OpenAI API error: {response.StatusCode}");
+                    System.Console.WriteLine($"OpenAI API error: {response.StatusCode}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error calling OpenAI API: {ex.Message}");
+                System.Console.WriteLine($"Error calling OpenAI API: {ex.Message}");
                 return null;
             }
         }

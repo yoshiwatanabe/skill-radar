@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using SkillRadar.Console.Models;
 
@@ -48,36 +49,38 @@ namespace SkillRadar.Console.Services
                 var storyIds = JsonSerializer.Deserialize<int[]>(topStoriesResponse);
 
                 if (storyIds == null) return articles;
-
-                var tasks = storyIds.Take(100).Select(async id =>
+                
+                var tasks = storyIds.Take(50).Select(async id =>
                 {
                     try
                     {
                         var storyResponse = await _httpClient.GetStringAsync($"https://hacker-news.firebaseio.com/v0/item/{id}.json");
                         var story = JsonSerializer.Deserialize<HackerNewsStory>(storyResponse);
                         
-                        if (story != null && story.Time.HasValue && story.Url != null)
+                        if (story != null && !string.IsNullOrEmpty(story.Title))
                         {
-                            var publishedAt = DateTimeOffset.FromUnixTimeSeconds(story.Time.Value).DateTime;
+                            var publishedAt = story.Time.HasValue ? 
+                                DateTimeOffset.FromUnixTimeSeconds(story.Time.Value).DateTime : DateTime.Now;
                             
+                            // Filter articles by date range
                             if (publishedAt >= weekStart && publishedAt <= weekEnd)
                             {
                                 return new Article
                                 {
                                     Id = $"hn_{id}",
-                                    Title = story.Title ?? "",
-                                    Url = story.Url,
+                                    Title = story.Title,
+                                    Url = story.Url ?? $"https://news.ycombinator.com/item?id={id}",
                                     Source = "HackerNews",
                                     PublishedAt = publishedAt,
                                     Score = story.Score ?? 0,
-                                    TechTags = ExtractTechTags(story.Title ?? "")
+                                    TechTags = ExtractTechTags(story.Title)
                                 };
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error fetching HN story {id}: {ex.Message}");
+                        System.Console.WriteLine($"Error fetching HN story {id}: {ex.Message}");
                     }
                     return null;
                 });
@@ -89,7 +92,7 @@ namespace SkillRadar.Console.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error collecting HackerNews articles: {ex.Message}");
+                System.Console.WriteLine($"Error collecting HackerNews articles: {ex.Message}");
                 return new List<Article>();
             }
         }
@@ -137,7 +140,7 @@ namespace SkillRadar.Console.Services
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error fetching Reddit subreddit {subreddit}: {ex.Message}");
+                        System.Console.WriteLine($"Error fetching Reddit subreddit {subreddit}: {ex.Message}");
                     }
                 }
 
@@ -145,7 +148,7 @@ namespace SkillRadar.Console.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error collecting Reddit articles: {ex.Message}");
+                System.Console.WriteLine($"Error collecting Reddit articles: {ex.Message}");
                 return new List<Article>();
             }
         }
@@ -154,7 +157,7 @@ namespace SkillRadar.Console.Services
         {
             if (string.IsNullOrEmpty(_newsApiKey))
             {
-                Console.WriteLine("NewsAPI key not provided, skipping NewsAPI collection");
+                System.Console.WriteLine("NewsAPI key not provided, skipping NewsAPI collection");
                 return new List<Article>();
             }
 
@@ -193,7 +196,7 @@ namespace SkillRadar.Console.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error collecting NewsAPI articles: {ex.Message}");
+                System.Console.WriteLine($"Error collecting NewsAPI articles: {ex.Message}");
                 return new List<Article>();
             }
         }
@@ -224,9 +227,16 @@ namespace SkillRadar.Console.Services
 
     public class HackerNewsStory
     {
+        [JsonPropertyName("title")]
         public string? Title { get; set; }
+        
+        [JsonPropertyName("url")]
         public string? Url { get; set; }
+        
+        [JsonPropertyName("score")]
         public int? Score { get; set; }
+        
+        [JsonPropertyName("time")]
         public long? Time { get; set; }
     }
 
