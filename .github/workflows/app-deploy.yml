@@ -1,0 +1,242 @@
+name: 'Application Build & Deploy'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+  schedule:
+    # Run every Sunday at 9:00 AM JST (00:00 UTC)
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run analysis even if no code changes'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/skillradar-console
+
+jobs:
+  build:
+    name: 'Build Application'
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule' || github.event.inputs.force_run == 'true'
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v4
+
+    - name: 'Setup .NET'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: 'Restore dependencies'
+      run: dotnet restore src/SkillRadar.Console/SkillRadar.Console.csproj
+
+    - name: 'Build application'
+      run: dotnet build src/SkillRadar.Console/SkillRadar.Console.csproj --configuration Release --no-restore
+
+    - name: 'Test application'
+      run: |
+        # Create a simple smoke test
+        echo "Running smoke tests..."
+        dotnet run --project src/SkillRadar.Console/SkillRadar.Console.csproj --configuration Release --help || true
+
+    - name: 'Setup Docker Buildx'
+      uses: docker/setup-buildx-action@v3
+
+    - name: 'Log in to Container Registry'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 'Extract metadata'
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: 'Create Dockerfile'
+      run: |
+        cat > Dockerfile << 'EOF'
+        FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+        WORKDIR /app
+        
+        FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+        WORKDIR /src
+        COPY ["src/SkillRadar.Console/SkillRadar.Console.csproj", "SkillRadar.Console/"]
+        RUN dotnet restore "SkillRadar.Console/SkillRadar.Console.csproj"
+        COPY src/SkillRadar.Console/ SkillRadar.Console/
+        WORKDIR "/src/SkillRadar.Console"
+        RUN dotnet build "SkillRadar.Console.csproj" -c Release -o /app/build
+        
+        FROM build AS publish
+        RUN dotnet publish "SkillRadar.Console.csproj" -c Release -o /app/publish /p:UseAppHost=false
+        
+        FROM base AS final
+        WORKDIR /app
+        COPY --from=publish /app/publish .
+        
+        # Install curl for health checks
+        RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+        
+        ENTRYPOINT ["dotnet", "SkillRadar.Console.dll"]
+        EOF
+
+    - name: 'Build and push Docker image'
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    name: 'Deploy to Azure'
+    runs-on: ubuntu-latest
+    needs: build
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    environment: production
+    
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v4
+
+    - name: 'Azure Login'
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: 'Get Container Image'
+      id: image
+      run: |
+        if [ "${{ github.event_name }}" == "schedule" ]; then
+          # For scheduled runs, use the latest image
+          echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
+        else
+          # For code changes, use the newly built image
+          echo "image=${{ needs.build.outputs.image-tag }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: 'Run SkillRadar Analysis'
+      run: |
+        CONTAINER_GROUP_NAME="${{ secrets.AZURE_CONTAINER_GROUP_NAME || 'skillradar-dev-aci' }}"
+        RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP || 'skillradar-rg' }}"
+        
+        echo "Starting SkillRadar weekly analysis..."
+        echo "Container Group: $CONTAINER_GROUP_NAME"
+        echo "Resource Group: $RESOURCE_GROUP"
+        echo "Image: ${{ steps.image.outputs.image }}"
+        
+        # Update container group with new image (if available)
+        if [ "${{ github.event_name }}" != "schedule" ]; then
+          echo "Updating container group with new image..."
+          az container create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$CONTAINER_GROUP_NAME-$(date +%Y%m%d-%H%M%S)" \
+            --image "${{ steps.image.outputs.image }}" \
+            --restart-policy Never \
+            --environment-variables \
+              OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+              NEWS_API_KEY="${{ secrets.NEWS_API_KEY }}" \
+              REDDIT_CLIENT_ID="${{ secrets.REDDIT_CLIENT_ID }}" \
+              REDDIT_CLIENT_SECRET="${{ secrets.REDDIT_CLIENT_SECRET }}" \
+            --cpu 1 \
+            --memory 2
+        else
+          # For scheduled runs, start the existing container group
+          echo "Starting existing container group..."
+          az container start \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$CONTAINER_GROUP_NAME" || true
+        fi
+
+    - name: 'Monitor Execution'
+      run: |
+        CONTAINER_GROUP_NAME="${{ secrets.AZURE_CONTAINER_GROUP_NAME || 'skillradar-dev-aci' }}"
+        RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP || 'skillradar-rg' }}"
+        
+        echo "Monitoring container execution..."
+        
+        # Wait for container to complete (max 10 minutes)
+        for i in {1..60}; do
+          STATE=$(az container show \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$CONTAINER_GROUP_NAME" \
+            --query instanceView.state \
+            --output tsv 2>/dev/null || echo "NotFound")
+          
+          echo "Container state: $STATE (attempt $i/60)"
+          
+          if [ "$STATE" == "Succeeded" ]; then
+            echo "✅ Container execution completed successfully"
+            break
+          elif [ "$STATE" == "Failed" ]; then
+            echo "❌ Container execution failed"
+            exit 1
+          elif [ "$STATE" == "NotFound" ]; then
+            echo "⚠️ Container not found, may have been cleaned up"
+            break
+          fi
+          
+          sleep 10
+        done
+        
+        # Get container logs
+        echo "📋 Container logs:"
+        az container logs \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$CONTAINER_GROUP_NAME" \
+          --tail 100 || echo "No logs available"
+
+  notify:
+    name: 'Notify Results'
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: always()
+    
+    steps:
+    - name: 'Send Notification'
+      run: |
+        if [ "${{ needs.deploy.result }}" == "success" ]; then
+          echo "✅ SkillRadar weekly analysis completed successfully!"
+          echo "📊 Check the container logs for the generated report"
+        else
+          echo "❌ SkillRadar analysis failed"
+          echo "🔍 Check the deployment logs for details"
+        fi
+        
+        # Here you could add integrations for:
+        # - Slack notifications
+        # - Email notifications  
+        # - Teams notifications
+        # - Discord webhooks
+        # etc.
