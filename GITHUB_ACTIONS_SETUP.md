@@ -7,65 +7,55 @@ Go to your GitHub repository: https://github.com/yoshiwatanabe/skill-radar
 **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
 
 ### Required Secrets (Azure Authentication)
-Add these secrets using the service principal you created:
+Add this secret using the service principal you created:
 
-1. **AZURE_CLIENT_ID**
-   ```
-   [Your service principal client ID from Azure CLI output]
-   ```
-
-2. **AZURE_TENANT_ID**
-   ```
-   [Your Azure tenant ID from Azure CLI output]
-   ```
-
-3. **AZURE_SUBSCRIPTION_ID**
-   ```
-   [Your Azure subscription ID from Azure CLI output]
-   ```
-
-4. **AZURE_CLIENT_SECRET**
-   ```
-   [Your service principal client secret from Azure CLI output]
+1. **AZURE_CREDENTIALS** (JSON format)
+   ```json
+   {
+     "clientId": "[Your service principal client ID]",
+     "clientSecret": "[Your service principal client secret]", 
+     "subscriptionId": "[Your Azure subscription ID]",
+     "tenantId": "[Your Azure tenant ID]"
+   }
    ```
 
 ### Required Secrets (API Keys)
-5. **OPENAI_API_KEY**
+2. **OPENAI_API_KEY**
    ```
    [Your new OpenAI API key]
    ```
 
 ### Required Secrets (Azure Resources)
-6. **AZURE_RESOURCE_GROUP**
+3. **AZURE_RESOURCE_GROUP**
    ```
    skillradar-rg
    ```
 
-7. **AZURE_STORAGE_ACCOUNT_NAME**
+4. **AZURE_STORAGE_ACCOUNT_NAME**
    ```
    skillradardevstorage
    ```
 
-8. **AZURE_KEY_VAULT_NAME**
+5. **AZURE_KEY_VAULT_NAME**
    ```
    skillradar-dev-kv
    ```
 
 ### Optional Secrets (Enhanced Data Collection)
-9. **NEWS_API_KEY** (when you get it)
+6. **NEWS_API_KEY** (when you get it)
    ```
    [Your NewsAPI key]
    ```
 
-10. **REDDIT_CLIENT_ID** (when you get it)
-    ```
-    [Your Reddit API client ID]
-    ```
+7. **REDDIT_CLIENT_ID** (when you get it)
+   ```
+   [Your Reddit API client ID]
+   ```
 
-11. **REDDIT_CLIENT_SECRET** (when you get it)
-    ```
-    [Your Reddit API client secret]
-    ```
+8. **REDDIT_CLIENT_SECRET** (when you get it)
+   ```
+   [Your Reddit API client secret]
+   ```
 
 ## 🧪 Test the GitHub Actions Deployment
 
@@ -114,8 +104,9 @@ Add these secrets using the service principal you created:
 ### Common Issues & Solutions
 
 **❌ GitHub Actions fails with authentication error**
-- Check all Azure secrets are correctly set
+- Ensure AZURE_CREDENTIALS secret is set with correct JSON format
 - Verify service principal has contributor role on resource group
+- Double-check all values in the JSON credentials are correct
 
 **❌ "Container deployment failed"**
 - Check if container image exists (workflow builds it)
