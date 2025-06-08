@@ -10,6 +10,7 @@ namespace SkillRadar.Console
 {
     class Program
     {
+        // Fixed Console namespace conflicts for GitHub Actions CI/CD
         static async Task Main(string[] args)
         {
             System.Console.WriteLine("🔍 SkillRadar - Weekly Technology Trend Analysis");
