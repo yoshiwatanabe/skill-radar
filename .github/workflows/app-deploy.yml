@@ -35,6 +35,7 @@ jobs:
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
       image-digest: ${{ steps.build.outputs.digest }}
+      image-main-tag: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
     
     steps:
     - name: 'Checkout'
@@ -140,8 +141,8 @@ jobs:
           # For scheduled runs, use the latest image
           echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
         else
-          # For code changes, use the newly built image
-          echo "image=${{ needs.build.outputs.image-tag }}" >> $GITHUB_OUTPUT
+          # For code changes, use the newly built image (use main tag for simplicity)
+          echo "image=${{ needs.build.outputs.image-main-tag }}" >> $GITHUB_OUTPUT
         fi
 
     - name: 'Run SkillRadar Analysis'
