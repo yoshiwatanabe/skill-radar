@@ -162,6 +162,7 @@ jobs:
             --resource-group "$RESOURCE_GROUP" \
             --name "$CONTAINER_GROUP_NAME-$(date +%Y%m%d-%H%M%S)" \
             --image "${{ steps.image.outputs.image }}" \
+            --os-type Linux \
             --restart-policy Never \
             --environment-variables \
               OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
