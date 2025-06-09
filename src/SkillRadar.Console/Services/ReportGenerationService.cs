@@ -9,6 +9,13 @@ namespace SkillRadar.Console.Services
 {
     public class ReportGenerationService
     {
+        private readonly AzureStorageService? _azureStorageService;
+
+        public ReportGenerationService(AzureStorageService? azureStorageService = null)
+        {
+            _azureStorageService = azureStorageService;
+        }
+
         public Task GenerateConsoleReportAsync(TrendReport report)
         {
             var output = GenerateReportContent(report);
@@ -25,8 +32,23 @@ namespace SkillRadar.Console.Services
                 _ => GenerateMarkdownReport(report)
             };
 
+            // Save locally first
             await File.WriteAllTextAsync(filePath, content, Encoding.UTF8);
-            System.Console.WriteLine($"Report saved to: {filePath}");
+            System.Console.WriteLine($"Report saved locally to: {filePath}");
+
+            // Upload to Azure Storage if available
+            if (_azureStorageService != null)
+            {
+                var fileName = Path.GetFileName(filePath);
+                var contentType = format.ToLowerInvariant() switch
+                {
+                    "html" => "text/html",
+                    "json" => "application/json",
+                    _ => "text/markdown"
+                };
+
+                await _azureStorageService.UploadReportAsync(fileName, content, contentType);
+            }
         }
 
         private string GenerateReportContent(TrendReport report)

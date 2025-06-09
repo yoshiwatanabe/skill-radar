@@ -1,0 +1,305 @@
+﻿{
+  "weekStart": "2025-06-08T00:00:00",
+  "weekEnd": "2025-06-08T00:00:00",
+  "topTrends": [
+    {
+      "name": "ar",
+      "mentionCount": 6,
+      "keyInsight": "Growing interest in ar with 5 related articles this week",
+      "learningRecommendation": "Consider exploring ar fundamentals and practical applications",
+      "relatedArticles": [
+        {
+          "id": "hn_44214522",
+          "title": "\u003CBlink\u003E and \u003CMarquee\u003E (2020)",
+          "summary": "",
+          "url": "https://danq.me/2020/11/11/blink-and-marquee/",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T04:17:43",
+          "techTags": [
+            "AR"
+          ],
+          "score": 193,
+          "relevanceScore": 0.5267858
+        },
+        {
+          "id": "hn_44216123",
+          "title": "Ask HN: How to learn CUDA to professional level",
+          "summary": "",
+          "url": "https://news.ycombinator.com/item?id=44216123",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T10:52:35",
+          "techTags": [
+            "AR"
+          ],
+          "score": 193,
+          "relevanceScore": 0.5267858
+        },
+        {
+          "id": "hn_44217757",
+          "title": "Show HN: Let\u2019s Bend \u2013 Open-Source Harmonica Bending Trainer",
+          "summary": "",
+          "url": "https://letsbend.de",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T16:00:22",
+          "techTags": [
+            "AI",
+            "AR"
+          ],
+          "score": 76,
+          "relevanceScore": 0.43438053
+        },
+        {
+          "id": "hn_44219171",
+          "title": "Acetylated cellulose suppresses mass through commensals consuming carbohydrates",
+          "summary": "",
+          "url": "https://www.sciencedirect.com/science/article/pii/S1550413125002232",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T19:59:41",
+          "techTags": [
+            "AR"
+          ],
+          "score": 18,
+          "relevanceScore": 0
+        },
+        {
+          "id": "hn_44219871",
+          "title": "OpenBSD IO Benchmarking: How Many Jobs Are Worth It?",
+          "summary": "",
+          "url": "https://rsadowski.de/posts/2025/fio_simple_benckmarking/",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T22:26:43",
+          "techTags": [
+            "AR"
+          ],
+          "score": 15,
+          "relevanceScore": 0
+        }
+      ]
+    },
+    {
+      "name": "ai",
+      "mentionCount": 3,
+      "keyInsight": "Growing interest in ai with 3 related articles this week",
+      "learningRecommendation": "Consider exploring ai fundamentals and practical applications",
+      "relatedArticles": [
+        {
+          "id": "hn_44217757",
+          "title": "Show HN: Let\u2019s Bend \u2013 Open-Source Harmonica Bending Trainer",
+          "summary": "",
+          "url": "https://letsbend.de",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T16:00:22",
+          "techTags": [
+            "AI",
+            "AR"
+          ],
+          "score": 76,
+          "relevanceScore": 0.43438053
+        },
+        {
+          "id": "hn_44220135",
+          "title": "I Used AI-Powered Calorie Counting Apps, and They Were Even Worse Than Expected",
+          "summary": "",
+          "url": "https://lifehacker.com/health/ai-powered-calorie-counting-apps-worse-than-expected",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T23:25:41",
+          "techTags": [
+            "AI"
+          ],
+          "score": 18,
+          "relevanceScore": 0
+        },
+        {
+          "id": "hn_44220179",
+          "title": "Riding high in Germany on the world\u0027s oldest suspended railway",
+          "summary": "",
+          "url": "https://www.theguardian.com/travel/2025/jun/09/riding-high-in-germany-on-the-worlds-oldest-suspended-railway",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T23:38:58",
+          "techTags": [
+            "AI"
+          ],
+          "score": 5,
+          "relevanceScore": 0
+        }
+      ]
+    },
+    {
+      "name": "android",
+      "mentionCount": 2,
+      "keyInsight": "Growing interest in android with 1 related articles this week",
+      "learningRecommendation": "Consider exploring android fundamentals and practical applications",
+      "relatedArticles": [
+        {
+          "id": "hn_44219405",
+          "title": "Why Android can\u0027t use CDC Ethernet (2023)",
+          "summary": "",
+          "url": "https://jordemort.dev/blog/why-android-cant-use-cdc-ethernet/",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T20:49:07",
+          "techTags": [
+            "Android"
+          ],
+          "score": 122,
+          "relevanceScore": 0.48121843
+        }
+      ]
+    },
+    {
+      "name": "framework",
+      "mentionCount": 2,
+      "keyInsight": "Growing interest in framework with 1 related articles this week",
+      "learningRecommendation": "Consider exploring framework fundamentals and practical applications",
+      "relatedArticles": [
+        {
+          "id": "hn_44214960",
+          "title": "Fray: A Controlled Concurrency Testing Framework for the JVM",
+          "summary": "",
+          "url": "https://github.com/cmu-pasta/fray",
+          "source": "HackerNews",
+          "publishedAt": "2025-06-08T06:21:42",
+          "techTags": [
+            "Framework"
+          ],
+          "score": 64,
+          "relevanceScore": 0.41743875
+        }
+      ]
+    }
+  ],
+  "mustReadArticles": [
+    {
+      "id": "hn_44215352",
+      "title": "The last six months in LLMs, illustrated by pelicans on bicycles",
+      "summary": "",
+      "url": "https://simonwillison.net/2025/Jun/6/six-months-in-llms/",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T07:38:37",
+      "techTags": [],
+      "score": 707,
+      "relevanceScore": 0.6562444
+    },
+    {
+      "id": "hn_44214522",
+      "title": "\u003CBlink\u003E and \u003CMarquee\u003E (2020)",
+      "summary": "",
+      "url": "https://danq.me/2020/11/11/blink-and-marquee/",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T04:17:43",
+      "techTags": [
+        "AR"
+      ],
+      "score": 193,
+      "relevanceScore": 0.5267858
+    },
+    {
+      "id": "hn_44216123",
+      "title": "Ask HN: How to learn CUDA to professional level",
+      "summary": "",
+      "url": "https://news.ycombinator.com/item?id=44216123",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T10:52:35",
+      "techTags": [
+        "AR"
+      ],
+      "score": 193,
+      "relevanceScore": 0.5267858
+    },
+    {
+      "id": "hn_44215603",
+      "title": "Gaussian integration is cool",
+      "summary": "",
+      "url": "https://rohangautam.github.io/blog/chebyshev_gauss/",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T08:35:54",
+      "techTags": [],
+      "score": 136,
+      "relevanceScore": 0.4919981
+    },
+    {
+      "id": "hn_44219405",
+      "title": "Why Android can\u0027t use CDC Ethernet (2023)",
+      "summary": "",
+      "url": "https://jordemort.dev/blog/why-android-cant-use-cdc-ethernet/",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T20:49:07",
+      "techTags": [
+        "Android"
+      ],
+      "score": 122,
+      "relevanceScore": 0.48121843
+    },
+    {
+      "id": "hn_44217876",
+      "title": "Administering immunotherapy in the morning seems to matter. Why?",
+      "summary": "",
+      "url": "https://www.owlposting.com/p/the-time-of-day-that-immunotherapy",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T16:18:32",
+      "techTags": [],
+      "score": 112,
+      "relevanceScore": 0.4727388
+    },
+    {
+      "id": "hn_44217757",
+      "title": "Show HN: Let\u2019s Bend \u2013 Open-Source Harmonica Bending Trainer",
+      "summary": "",
+      "url": "https://letsbend.de",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T16:00:22",
+      "techTags": [
+        "AI",
+        "AR"
+      ],
+      "score": 76,
+      "relevanceScore": 0.43438053
+    },
+    {
+      "id": "hn_44216630",
+      "title": "Binfmtc \u2013 binfmt_misc C scripting interface",
+      "summary": "",
+      "url": "https://www.netfort.gr.jp/~dancer/software/binfmtc.html.en",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T12:38:55",
+      "techTags": [],
+      "score": 76,
+      "relevanceScore": 0.43438053
+    },
+    {
+      "id": "hn_44215726",
+      "title": "Focus and Context and LLMs",
+      "summary": "",
+      "url": "https://taras.glek.net/posts/focus-and-context-and-llms/",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T09:09:19",
+      "techTags": [],
+      "score": 66,
+      "relevanceScore": 0.42046928
+    },
+    {
+      "id": "hn_44214960",
+      "title": "Fray: A Controlled Concurrency Testing Framework for the JVM",
+      "summary": "",
+      "url": "https://github.com/cmu-pasta/fray",
+      "source": "HackerNews",
+      "publishedAt": "2025-06-08T06:21:42",
+      "techTags": [
+        "Framework"
+      ],
+      "score": 64,
+      "relevanceScore": 0.41743875
+    }
+  ],
+  "learningRecommendations": [
+    "Deep dive: ar (estimated 4-6 hours) - Focus on practical implementation",
+    "Deep dive: ai (estimated 4-6 hours) - Focus on practical implementation",
+    "Deep dive: android (estimated 4-6 hours) - Focus on practical implementation"
+  ],
+  "techKeywordFrequency": {
+    "ar": 6,
+    "ai": 3,
+    "android": 2,
+    "framework": 2
+  },
+  "weeklySummary": "This week\u0027s technology landscape focused on key developments across 4 major areas."
+}

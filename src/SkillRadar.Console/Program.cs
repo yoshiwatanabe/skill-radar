@@ -40,7 +40,34 @@ namespace SkillRadar.Console
                     Environment.GetEnvironmentVariable("OPENAI_API_KEY")
                 );
 
-                var reportService = new ReportGenerationService();
+                // Initialize Azure Storage service if connection string or account name is available
+                AzureStorageService? azureStorageService = null;
+                var azureStorageConnectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
+                var azureStorageAccountName = Environment.GetEnvironmentVariable("AZURE_STORAGE_ACCOUNT_NAME");
+                
+                var storageCredential = azureStorageConnectionString ?? azureStorageAccountName;
+                if (!string.IsNullOrEmpty(storageCredential))
+                {
+                    try
+                    {
+                        azureStorageService = new AzureStorageService(storageCredential);
+                        System.Console.WriteLine($"⚙️  Azure Storage initialized using {(azureStorageConnectionString != null ? "connection string" : "managed identity")}");
+                        await azureStorageService.TestConnectionAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.WriteLine($"⚠️  Azure Storage initialization failed: {ex.Message}");
+                        System.Console.WriteLine("📝 Reports will be saved locally only");
+                        azureStorageService = null;
+                    }
+                }
+                else
+                {
+                    System.Console.WriteLine("⚠️  Neither AZURE_STORAGE_CONNECTION_STRING nor AZURE_STORAGE_ACCOUNT_NAME found");
+                    System.Console.WriteLine("📝 Reports will be saved locally only");
+                }
+
+                var reportService = new ReportGenerationService(azureStorageService);
 
                 var weekStart = GetWeekStart();
                 var weekEnd = GetWeekEnd(weekStart);
@@ -51,6 +78,15 @@ namespace SkillRadar.Console
                 System.Console.WriteLine("📰 Collecting articles from multiple sources...");
                 var articles = await newsService.CollectWeeklyArticlesAsync(weekStart, weekEnd);
                 System.Console.WriteLine($"✅ Collected {articles.Count} articles");
+
+                // Save articles to Azure Storage if available
+                if (azureStorageService != null && articles.Count > 0)
+                {
+                    var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                    var articlesFileName = $"articles_{timestamp}.json";
+                    await azureStorageService.UploadArticlesAsync(articles, articlesFileName);
+                }
+
                 System.Console.WriteLine();
 
                 if (articles.Count == 0)
@@ -62,6 +98,15 @@ namespace SkillRadar.Console
                 System.Console.WriteLine("🔍 Analyzing trends and generating insights...");
                 var trendReport = await analysisService.AnalyzeWeeklyTrendsAsync(articles, config.UserProfile);
                 System.Console.WriteLine("✅ Analysis complete");
+
+                // Save trend report to Azure Storage if available
+                if (azureStorageService != null)
+                {
+                    var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                    var trendReportFileName = $"trend_analysis_{timestamp}.json";
+                    await azureStorageService.UploadTrendReportAsync(trendReport, trendReportFileName);
+                }
+
                 System.Console.WriteLine();
 
                 System.Console.WriteLine("📊 Generating report...");
