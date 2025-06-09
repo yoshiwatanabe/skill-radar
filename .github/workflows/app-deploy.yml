@@ -158,17 +158,22 @@ jobs:
         # Update container group with new image (if available)
         if [ "${{ github.event_name }}" != "schedule" ]; then
           echo "Updating container group with new image..."
+          # Get the managed identity resource ID
+          IDENTITY_ID=$(az identity show --resource-group "$RESOURCE_GROUP" --name skillradar-identity --query id --output tsv)
+          
           az container create \
             --resource-group "$RESOURCE_GROUP" \
             --name "$CONTAINER_GROUP_NAME-$(date +%Y%m%d-%H%M%S)" \
             --image "${{ steps.image.outputs.image }}" \
             --os-type Linux \
             --restart-policy Never \
+            --assign-identity "$IDENTITY_ID" \
             --environment-variables \
               OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
               NEWS_API_KEY="${{ secrets.NEWS_API_KEY }}" \
               REDDIT_CLIENT_ID="${{ secrets.REDDIT_CLIENT_ID }}" \
               REDDIT_CLIENT_SECRET="${{ secrets.REDDIT_CLIENT_SECRET }}" \
+              AZURE_STORAGE_ACCOUNT_NAME="skillradardevstorage" \
             --cpu 1 \
             --memory 2
         else
