@@ -285,7 +285,7 @@ namespace SkillRadar.Console.Services
                 
                 // Programming & Development
                 "C#", ".NET", "ASP.NET", "Python", "JavaScript", "TypeScript", "Rust", "Go", "Java",
-                "API", "REST", "GraphQL", "gRPC", "Database", "SQL", "NoSQL", "PostgreSQL", "Redis",
+                "API", "REST", "GraphQL", "gRPC", "PostgreSQL", "Redis",
                 
                 // Architecture & Design
                 "System Design", "Software Architecture", "Distributed Systems", "Event-Driven",
@@ -297,8 +297,7 @@ namespace SkillRadar.Console.Services
                 "Zero Trust", "Identity", "RBAC", "Encryption", "TLS", "PKI",
                 
                 // Development Tools & Practices
-                "Framework", "Library", "Open Source", "Git", "GitHub", "Deployment", "Testing",
-                "Unit Testing", "Integration Testing", "TDD", "BDD", "Code Review", "Refactoring"
+                "Open Source", "Git", "GitHub", "TDD", "BDD", "Code Review", "Refactoring"
             };
 
             return techKeywords.Where(keyword => 

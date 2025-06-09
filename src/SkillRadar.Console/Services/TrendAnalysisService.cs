@@ -65,7 +65,7 @@ namespace SkillRadar.Console.Services
             }
 
             return keywordFrequency
-                .Where(kv => kv.Value >= 2)
+                .Where(kv => kv.Value >= 3) // Increase threshold for more meaningful trends
                 .OrderByDescending(kv => kv.Value)
                 .Take(50)
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
