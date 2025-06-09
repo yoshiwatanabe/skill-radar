@@ -7,8 +7,8 @@ on:
     paths:
       - 'src/**'
   schedule:
-    # Run every Sunday at 9:00 AM JST (00:00 UTC)
-    - cron: '0 0 * * 0'
+    # Run every Thursday at 11:00 PM JST (14:00 UTC) - ready for Friday learning
+    - cron: '0 14 * * 4'
   workflow_dispatch:
     inputs:
       force_run:
