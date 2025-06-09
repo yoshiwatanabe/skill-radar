@@ -28,6 +28,13 @@ namespace SkillRadar.Console
             EnvironmentLoader.LoadFromFile();
             System.Console.WriteLine();
 
+            // Initialize Email Notification service first to use in error handling
+            var emailService = new EmailNotificationService(
+                Environment.GetEnvironmentVariable("AZURE_COMMUNICATION_CONNECTION_STRING"),
+                Environment.GetEnvironmentVariable("EMAIL_SENDER_ADDRESS"),
+                Environment.GetEnvironmentVariable("EMAIL_RECIPIENT_ADDRESS")
+            );
+
             try
             {
                 var config = await LoadConfigurationAsync();
@@ -141,6 +148,19 @@ namespace SkillRadar.Console
                 System.Console.WriteLine($"📈 Processed {articles.Count} articles");
                 System.Console.WriteLine($"🔥 Identified {trendReport.TopTrends.Count} trending topics");
                 System.Console.WriteLine($"📚 Selected {trendReport.MustReadArticles.Count} must-read articles");
+
+                // Send email notification with results
+                System.Console.WriteLine();
+                System.Console.WriteLine("📧 Sending email notification...");
+                var emailSent = await emailService.SendWeeklyReportAsync(trendReport, articles);
+                if (emailSent)
+                {
+                    System.Console.WriteLine("✅ Email notification sent successfully!");
+                }
+                else
+                {
+                    System.Console.WriteLine("⚠️  Email notification not sent (service not configured or failed)");
+                }
             }
             catch (Exception ex)
             {
@@ -151,6 +171,22 @@ namespace SkillRadar.Console
                 System.Console.WriteLine("   - NEWS_API_KEY (optional, for NewsAPI integration)");
                 System.Console.WriteLine("   - REDDIT_CLIENT_ID (optional, for Reddit API)");
                 System.Console.WriteLine("   - REDDIT_CLIENT_SECRET (optional, for Reddit API)");
+                
+                // Send error notification email
+                try
+                {
+                    System.Console.WriteLine();
+                    System.Console.WriteLine("📧 Sending error notification email...");
+                    var errorEmailSent = await emailService.SendErrorNotificationAsync(ex.Message, "SkillRadar weekly analysis");
+                    if (errorEmailSent)
+                    {
+                        System.Console.WriteLine("✅ Error notification email sent successfully!");
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    System.Console.WriteLine($"⚠️  Failed to send error notification email: {emailEx.Message}");
+                }
                 
                 if (args.Length > 0 && args[0] == "--debug")
                 {

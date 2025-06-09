@@ -73,10 +73,34 @@ namespace SkillRadar.Console.Services
 
         private async Task<List<TrendingTopic>> IdentifyTopTrendsAsync(List<Article> articles, Dictionary<string, int> keywordFrequency, UserProfile userProfile)
         {
-            var topKeywords = keywordFrequency.OrderByDescending(kv => kv.Value).Take(10).ToList();
+            // Filter out overly generic terms that aren't useful for senior engineers
+            var genericTerms = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "ai", "go", "api", "git", "github", "rest", "testing", "programming", 
+                "development", "software", "technology", "code", "system", "data"
+            };
+
+            // Focus on compound/specific trends and meaningful technologies
+            var meaningfulKeywords = keywordFrequency
+                .Where(kv => !genericTerms.Contains(kv.Key))
+                .OrderByDescending(kv => kv.Value)
+                .Take(15) // Take more to have options after filtering
+                .ToList();
+
+            // Add compound trend detection for specific AI/tech topics
+            var compoundTrends = DetectCompoundTrends(articles);
+            
+            // Merge compound trends with keyword trends
+            var allTrends = new Dictionary<string, int>();
+            foreach (var trend in meaningfulKeywords)
+                allTrends[trend.Key] = trend.Value;
+            foreach (var trend in compoundTrends)
+                allTrends[trend.Key] = trend.Value;
+
+            var topTrends = allTrends.OrderByDescending(kv => kv.Value).Take(10).ToList();
             var trendingTopics = new List<TrendingTopic>();
 
-            foreach (var keyword in topKeywords)
+            foreach (var keyword in topTrends)
             {
                 var relatedArticles = articles
                     .Where(a => a.TechTags.Any(tag => tag.ToLowerInvariant() == keyword.Key) ||
@@ -103,6 +127,51 @@ namespace SkillRadar.Console.Services
             }
 
             return trendingTopics.Take(5).ToList();
+        }
+
+        private Dictionary<string, int> DetectCompoundTrends(List<Article> articles)
+        {
+            var compoundTrends = new Dictionary<string, int>();
+            
+            // Define specific compound trends we care about
+            var compoundPatterns = new Dictionary<string, string[]>
+            {
+                ["AI Agents"] = new[] { "ai agent", "agentic ai", "ai agents", "autonomous agent", "agent framework" },
+                ["Vector Database"] = new[] { "vector database", "vector db", "pinecone", "weaviate", "chroma", "qdrant" },
+                ["RAG Systems"] = new[] { "rag", "retrieval augmented", "retrieval-augmented generation", "rag pipeline" },
+                ["LLM Engineering"] = new[] { "llm engineering", "prompt engineering", "fine-tuning", "model optimization", "llm ops" },
+                ["Cloud Native"] = new[] { "cloud native", "cloud-native", "serverless architecture", "container orchestration" },
+                ["Platform Engineering"] = new[] { "platform engineering", "developer experience", "internal platforms", "devex" },
+                ["Real-time AI"] = new[] { "real-time ai", "streaming ai", "edge ai", "ai inference", "live ai" },
+                ["AI Governance"] = new[] { "ai governance", "ai ethics", "responsible ai", "ai compliance", "ai safety" },
+                ["Multimodal AI"] = new[] { "multimodal", "vision language", "vlm", "multimodal ai", "cross-modal" },
+                ["Edge Computing"] = new[] { "edge computing", "edge ai", "iot edge", "distributed computing", "fog computing" }
+            };
+            
+            foreach (var pattern in compoundPatterns)
+            {
+                var matchCount = 0;
+                var compoundName = pattern.Key;
+                var searchTerms = pattern.Value;
+                
+                foreach (var article in articles)
+                {
+                    var fullText = $"{article.Title} {article.Summary}".ToLowerInvariant();
+                    
+                    if (searchTerms.Any(term => fullText.Contains(term.ToLowerInvariant())))
+                    {
+                        matchCount++;
+                    }
+                }
+                
+                // Only include compound trends with meaningful mention counts
+                if (matchCount >= 3)
+                {
+                    compoundTrends[compoundName] = matchCount;
+                }
+            }
+            
+            return compoundTrends;
         }
 
         private List<Article> SelectMustReadArticles(List<Article> articles, UserProfile userProfile, int count)
@@ -183,9 +252,29 @@ Generate a concise key insight (1-2 sentences) about the current trend or develo
 
         private async Task<string> GenerateLearningRecommendationAsync(string keyword, UserProfile userProfile)
         {
+            // Generate specific, actionable recommendations based on the keyword
+            var specificRecommendations = new Dictionary<string, string>
+            {
+                ["AI Agents"] = "Build a multi-agent system using LangChain or AutoGen - start with a simple research assistant that coordinates multiple specialized agents",
+                ["Vector Database"] = "Implement RAG with Pinecone or Weaviate - build a document Q&A system for your own knowledge base",
+                ["RAG Systems"] = "Create a production RAG pipeline combining embeddings, vector search, and LLM completion for enterprise document search", 
+                ["LLM Engineering"] = "Master prompt engineering and fine-tuning - experiment with few-shot learning and chain-of-thought prompting",
+                ["Platform Engineering"] = "Design an internal developer platform using Backstage or Humanitec to improve team productivity",
+                ["Cloud Native"] = "Implement serverless-first architecture with event-driven microservices on Azure Functions or AWS Lambda",
+                ["Real-time AI"] = "Build real-time AI inference with streaming data using Azure Stream Analytics and edge deployment",
+                ["AI Governance"] = "Establish AI model governance with MLOps pipelines, monitoring, and responsible AI practices",
+                ["Multimodal AI"] = "Experiment with vision-language models for document understanding or image-text retrieval systems",
+                ["Edge Computing"] = "Deploy AI models to edge devices using Azure IoT Edge or AWS Greengrass for low-latency inference"
+            };
+
+            if (specificRecommendations.ContainsKey(keyword))
+            {
+                return specificRecommendations[keyword];
+            }
+
             if (string.IsNullOrEmpty(_openAiApiKey))
             {
-                return $"Consider exploring {keyword} fundamentals and practical applications";
+                return $"Explore {keyword} through hands-on projects and real-world implementation";
             }
 
             try
@@ -197,7 +286,7 @@ Generate a concise key insight (1-2 sentences) about the current trend or develo
                 var prompt = $@"Given a user profile: {userContext}
 And trending technology: {keyword}
 
-Suggest a specific, actionable learning recommendation (1 sentence) for this user to skill up in {keyword}. Be practical and specific.";
+Suggest a specific, actionable weekend project or learning path (1 sentence) for this senior engineer to skill up in {keyword}. Focus on hands-on implementation, not theory.";
 
                 return await CallOpenAIAsync(prompt) ?? $"Consider exploring {keyword} fundamentals and practical applications";
             }
