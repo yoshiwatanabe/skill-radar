@@ -198,7 +198,7 @@ namespace SkillRadar.Console
                 UserProfile = new UserProfile
                 {
                     Skills = new[] { "C#", ".NET", "Azure", "Cloud Architecture", "Machine Learning", "DevOps", "System Design" }.ToList(),
-                    Interests = new[] { "AI/ML", "LLM", "Cloud Engineering", "Software Architecture", "Platform Engineering", "Distributed Systems", "Backend Development" }.ToList(),
+                    Interests = new[] { "AI/ML", "LLM", "Generative AI", "Agentic AI", "AI Agents", "Cloud Engineering", "Software Architecture", "Platform Engineering", "Distributed Systems", "Backend Development" }.ToList(),
                     CareerStage = "Senior",
                     LearningGoals = new[] { "Advanced System Design", "AI Engineering", "Cloud-Native Architecture", "Leadership", "Platform Engineering" }.ToList()
                 },

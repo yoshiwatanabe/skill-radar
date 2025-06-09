@@ -102,7 +102,10 @@ namespace SkillRadar.Console.Services
             try
             {
                 var articles = new List<Article>();
-                var subreddits = new[] { "programming", "MachineLearning", "dotnet", "azure", "devops", "softwarearchitecture" };
+                var subreddits = new[] { 
+                    "programming", "MachineLearning", "dotnet", "azure", "devops", "softwarearchitecture",
+                    "artificial", "ChatGPT", "OpenAI", "LocalLLaMA", "singularity"
+                };
 
                 foreach (var subreddit in subreddits)
                 {
@@ -178,32 +181,84 @@ namespace SkillRadar.Console.Services
                 var fromDate = weekStart.ToString("yyyy-MM-dd");
                 var toDate = weekEnd.ToString("yyyy-MM-dd");
                 
-                var url = $"https://newsapi.org/v2/everything?q=technology&from={fromDate}&to={toDate}&sortBy=popularity&apiKey={_newsApiKey}&pageSize=100";
-                
-                var response = await _httpClient.GetStringAsync(url);
-                var newsResponse = JsonSerializer.Deserialize<NewsApiResponse>(response);
-
-                if (newsResponse?.Articles != null)
+                // Enhanced AI-focused search queries (simplified syntax for better results)
+                var queries = new[]
                 {
-                    foreach (var article in newsResponse.Articles)
+                    // Core AI and Agent queries
+                    "AI OR \"artificial intelligence\" OR \"machine learning\"",
+                    "\"generative AI\" OR LLM OR \"language model\" OR ChatGPT OR Claude",
+                    "\"AI agent\" OR \"agentic AI\" OR \"multi-agent\" OR OpenAI OR Anthropic",
+                    
+                    // Cloud and Platform Engineering
+                    "Azure OR AWS OR \"cloud computing\" OR \"platform engineering\"",
+                    "DevOps OR kubernetes OR serverless OR microservices",
+                    
+                    // Software Architecture and Development
+                    "\"software architecture\" OR \"system design\" OR \"distributed systems\"",
+                    "\".NET\" OR \"C#\" OR programming OR \"software development\""
+                };
+                
+                // Top AI/Tech focused sources
+                var sources = "techcrunch,ars-technica,the-verge,wired";
+                
+                // Enhanced domains targeting AI and tech publications
+                var domains = "techcrunch.com,arstechnica.com,theverge.com,wired.com,venturebeat.com,thenextweb.com";
+                
+                foreach (var query in queries)
+                {
+                    try
                     {
-                        if (article.PublishedAt.HasValue && !string.IsNullOrEmpty(article.Url))
+                        var encodedQuery = Uri.EscapeDataString(query);
+                        
+                        // Try with preferred sources first, using broader date range for better results
+                        var broadFromDate = DateTime.Now.AddDays(-7).ToString("yyyy-MM-dd");
+                        var url = $"https://newsapi.org/v2/everything?q={encodedQuery}&domains={domains}&from={broadFromDate}&sortBy=popularity&searchIn=title,description&apiKey={_newsApiKey}&pageSize=15";
+                        
+                        var response = await _httpClient.GetStringAsync(url);
+                        var newsResponse = JsonSerializer.Deserialize<NewsApiResponse>(response);
+
+                        // If no results with domain restriction, try without domain restriction
+                        if (newsResponse?.Articles == null || newsResponse.Articles.Length == 0)
                         {
-                            articles.Add(new Article
-                            {
-                                Id = $"newsapi_{article.Url.GetHashCode()}",
-                                Title = article.Title ?? "",
-                                Summary = article.Description ?? "",
-                                Url = article.Url,
-                                Source = $"NewsAPI-{article.Source?.Name ?? "Unknown"}",
-                                PublishedAt = article.PublishedAt.Value,
-                                TechTags = ExtractTechTags($"{article.Title} {article.Description}")
-                            });
+                            url = $"https://newsapi.org/v2/everything?q={encodedQuery}&category=technology&from={broadFromDate}&sortBy=popularity&searchIn=title,description&apiKey={_newsApiKey}&pageSize=10";
+                            response = await _httpClient.GetStringAsync(url);
+                            newsResponse = JsonSerializer.Deserialize<NewsApiResponse>(response);
                         }
+
+                        if (newsResponse?.Articles != null)
+                        {
+                            foreach (var article in newsResponse.Articles)
+                            {
+                                if (article.PublishedAt.HasValue && !string.IsNullOrEmpty(article.Url))
+                                {
+                                    // Avoid duplicates by checking if URL already exists
+                                    if (!articles.Any(a => a.Url == article.Url))
+                                    {
+                                        articles.Add(new Article
+                                        {
+                                            Id = $"newsapi_{article.Url.GetHashCode()}",
+                                            Title = article.Title ?? "",
+                                            Summary = article.Description ?? "",
+                                            Url = article.Url,
+                                            Source = $"NewsAPI-{article.Source?.Name ?? "Unknown"}",
+                                            PublishedAt = article.PublishedAt.Value,
+                                            TechTags = ExtractTechTags($"{article.Title} {article.Description}")
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Rate limiting: small delay between queries
+                        await Task.Delay(200);
+                    }
+                    catch (Exception queryEx)
+                    {
+                        System.Console.WriteLine($"Error with query '{query}': {queryEx.Message}");
                     }
                 }
 
-                return articles;
+                return articles.Take(30).ToList(); // Limit to 30 articles to maintain balance
             }
             catch (Exception ex)
             {
@@ -216,14 +271,34 @@ namespace SkillRadar.Console.Services
         {
             var techKeywords = new[]
             {
-                "AI", "Machine Learning", "ML", "LLM", "GPT", "Azure", "AWS", "GCP", "Cloud", 
-                "Docker", "Kubernetes", "Container", "Serverless", "C#", ".NET", "ASP.NET",
-                "Python", "JavaScript", "TypeScript", "Rust", "Go", "Java", "DevOps", "CI/CD", 
-                "Microservices", "API", "REST", "GraphQL", "Database", "SQL", "NoSQL",
-                "Security", "Cybersecurity", "Authentication", "OAuth", "Distributed Systems",
-                "Architecture", "System Design", "Performance", "Scalability", "Monitoring",
-                "Infrastructure", "SRE", "Platform Engineering", "Backend", "Framework", 
-                "Library", "Open Source", "Git", "GitHub", "Deployment", "Testing"
+                // AI & Machine Learning - Enhanced focus
+                "AI", "Artificial Intelligence", "Machine Learning", "ML", "LLM", "Large Language Model",
+                "GPT", "ChatGPT", "Claude", "Generative AI", "GenAI", "AI Agent", "Agentic AI", 
+                "AI Agents", "Multi-Agent", "Agent Framework", "LangChain", "AutoGPT", "RAG",
+                "Retrieval Augmented Generation", "Fine-tuning", "Prompt Engineering", "Vector Database",
+                "Embeddings", "Transformer", "Neural Network", "Deep Learning", "NLP", "Computer Vision",
+                
+                // Cloud & Infrastructure  
+                "Azure", "AWS", "GCP", "Cloud", "Azure OpenAI", "Azure AI", "OpenAI", "Anthropic",
+                "Docker", "Kubernetes", "Container", "Serverless", "Microservices", "Infrastructure",
+                "SRE", "Platform Engineering", "DevOps", "CI/CD", "Monitoring", "Observability",
+                
+                // Programming & Development
+                "C#", ".NET", "ASP.NET", "Python", "JavaScript", "TypeScript", "Rust", "Go", "Java",
+                "API", "REST", "GraphQL", "gRPC", "Database", "SQL", "NoSQL", "PostgreSQL", "Redis",
+                
+                // Architecture & Design
+                "System Design", "Software Architecture", "Distributed Systems", "Event-Driven",
+                "CQRS", "Event Sourcing", "Domain-Driven Design", "DDD", "Clean Architecture",
+                "Performance", "Scalability", "High Availability", "Load Balancing",
+                
+                // Security & Best Practices
+                "Security", "Cybersecurity", "Authentication", "Authorization", "OAuth", "JWT",
+                "Zero Trust", "Identity", "RBAC", "Encryption", "TLS", "PKI",
+                
+                // Development Tools & Practices
+                "Framework", "Library", "Open Source", "Git", "GitHub", "Deployment", "Testing",
+                "Unit Testing", "Integration Testing", "TDD", "BDD", "Code Review", "Refactoring"
             };
 
             return techKeywords.Where(keyword => 
@@ -249,7 +324,10 @@ namespace SkillRadar.Console.Services
             try
             {
                 var articles = new List<Article>();
-                var subreddits = new[] { "programming", "MachineLearning", "dotnet", "azure", "devops", "softwarearchitecture" };
+                var subreddits = new[] { 
+                    "programming", "MachineLearning", "dotnet", "azure", "devops", "softwarearchitecture",
+                    "artificial", "ChatGPT", "OpenAI", "LocalLLaMA", "singularity"
+                };
 
                 System.Console.WriteLine($"🔍 Testing Reddit API access...");
                 
@@ -340,63 +418,111 @@ namespace SkillRadar.Console.Services
                 var fromDate = weekStart.ToString("yyyy-MM-dd");
                 var toDate = weekEnd.ToString("yyyy-MM-dd");
                 
-                var url = $"https://newsapi.org/v2/everything?q=technology&from={fromDate}&to={toDate}&sortBy=popularity&apiKey={_newsApiKey}&pageSize=20";
-                
-                System.Console.WriteLine($"🔍 Testing NewsAPI access...");
+                System.Console.WriteLine($"🔍 Testing Enhanced NewsAPI access...");
                 System.Console.WriteLine($"  📡 API Key: {_newsApiKey.Substring(0, 8)}...");
                 System.Console.WriteLine($"  📅 Date range: {fromDate} to {toDate}");
-                System.Console.WriteLine($"  🌐 URL: {url.Replace(_newsApiKey, "***API_KEY***")}");
                 
-                var response = await _httpClient.GetStringAsync(url);
-                System.Console.WriteLine($"  📄 Response length: {response.Length} characters");
-                
-                // Show first part of response to debug structure
-                System.Console.WriteLine($"  📋 Response preview: {response.Substring(0, Math.Min(200, response.Length))}...");
-                
-                var jsonOptions = new JsonSerializerOptions
+                // Enhanced AI-focused search queries (simplified for better results)
+                var testQueries = new[]
                 {
-                    PropertyNameCaseInsensitive = true
+                    "AI OR \"artificial intelligence\" OR \"machine learning\"",
+                    "\"generative AI\" OR LLM OR ChatGPT OR Claude",
+                    "Azure OR AWS OR \"cloud computing\" OR DevOps"
                 };
                 
-                var newsResponse = JsonSerializer.Deserialize<NewsApiResponse>(response, jsonOptions);
-
-                if (newsResponse?.Articles != null && newsResponse.Articles.Length > 0)
+                var sources = "techcrunch,ars-technica,the-verge,wired";
+                var domains = "techcrunch.com,arstechnica.com,theverge.com,wired.com";
+                
+                foreach (var query in testQueries)
                 {
-                    System.Console.WriteLine($"  ✅ Got {newsResponse.Articles.Length} articles from NewsAPI");
-                    
-                    foreach (var article in newsResponse.Articles)
+                    try
                     {
-                        if (article.PublishedAt.HasValue && !string.IsNullOrEmpty(article.Url))
+                        System.Console.WriteLine($"  🔍 Testing query: {query}");
+                        
+                        var encodedQuery = Uri.EscapeDataString(query);
+                        
+                        // Try with broader date range (last 7 days) for better results
+                        var broadFromDate = DateTime.Now.AddDays(-7).ToString("yyyy-MM-dd");
+                        var url = $"https://newsapi.org/v2/everything?q={encodedQuery}&domains={domains}&from={broadFromDate}&sortBy=popularity&searchIn=title,description&apiKey={_newsApiKey}&pageSize=5";
+                        
+                        System.Console.WriteLine($"  🌐 URL: {url.Replace(_newsApiKey, "***API_KEY***")}");
+                        
+                        var response = await _httpClient.GetStringAsync(url);
+                        System.Console.WriteLine($"  📄 Response length: {response.Length} characters");
+                        
+                        var jsonOptions = new JsonSerializerOptions
                         {
-                            System.Console.WriteLine($"    • {article.Title} (Published: {article.PublishedAt:MMM d HH:mm})");
-                            System.Console.WriteLine($"      Source: {article.Source?.Name}, URL: {article.Url}");
-                            
-                            var newArticle = new Article
-                            {
-                                Id = $"newsapi_{article.Url.GetHashCode()}",
-                                Title = article.Title ?? "",
-                                Summary = article.Description ?? "",
-                                Url = article.Url,
-                                Source = article.Source?.Name ?? "NewsAPI",
-                                PublishedAt = article.PublishedAt.Value,
-                                Score = 0, // NewsAPI doesn't provide scores
-                                TechTags = ExtractTechTags($"{article.Title} {article.Description}")
-                            };
-                            articles.Add(newArticle);
+                            PropertyNameCaseInsensitive = true
+                        };
+                        
+                        var newsResponse = JsonSerializer.Deserialize<NewsApiResponse>(response, jsonOptions);
+
+                        // If no results, try without domain restriction
+                        if (newsResponse?.Articles == null || newsResponse.Articles.Length == 0)
+                        {
+                            System.Console.WriteLine($"  🔄 Trying without domain restrictions...");
+                            url = $"https://newsapi.org/v2/everything?q={encodedQuery}&category=technology&from={broadFromDate}&sortBy=popularity&searchIn=title,description&apiKey={_newsApiKey}&pageSize=5";
+                            response = await _httpClient.GetStringAsync(url);
+                            newsResponse = JsonSerializer.Deserialize<NewsApiResponse>(response, jsonOptions);
+                            System.Console.WriteLine($"  📄 Fallback response length: {response.Length} characters");
                         }
+
+                        if (newsResponse?.Articles != null && newsResponse.Articles.Length > 0)
+                        {
+                            System.Console.WriteLine($"  ✅ Got {newsResponse.Articles.Length} articles for this query");
+                            
+                            foreach (var article in newsResponse.Articles)
+                            {
+                                if (article.PublishedAt.HasValue && !string.IsNullOrEmpty(article.Url))
+                                {
+                                    System.Console.WriteLine($"    • {article.Title} (Published: {article.PublishedAt:MMM d HH:mm})");
+                                    System.Console.WriteLine($"      Source: {article.Source?.Name}, URL: {article.Url}");
+                                    
+                                    // Avoid duplicates
+                                    if (!articles.Any(a => a.Url == article.Url))
+                                    {
+                                        var newArticle = new Article
+                                        {
+                                            Id = $"newsapi_{article.Url.GetHashCode()}",
+                                            Title = article.Title ?? "",
+                                            Summary = article.Description ?? "",
+                                            Url = article.Url,
+                                            Source = article.Source?.Name ?? "NewsAPI",
+                                            PublishedAt = article.PublishedAt.Value,
+                                            Score = 0,
+                                            TechTags = ExtractTechTags($"{article.Title} {article.Description}")
+                                        };
+                                        articles.Add(newArticle);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            System.Console.WriteLine($"  ⚠️ No results for this query");
+                        }
+                        
+                        System.Console.WriteLine();
+                        await Task.Delay(100); // Rate limiting
+                    }
+                    catch (Exception queryEx)
+                    {
+                        System.Console.WriteLine($"  ❌ Error with query '{query}': {queryEx.Message}");
                     }
                 }
-                else if (newsResponse != null)
-                {
-                    System.Console.WriteLine($"  ❌ NewsAPI returned empty results");
-                    System.Console.WriteLine($"  🔍 Articles array is null or empty");
-                }
-                else
-                {
-                    System.Console.WriteLine($"  ❌ Failed to parse NewsAPI response");
-                }
 
-                System.Console.WriteLine($"📊 Total articles collected: {articles.Count}");
+                System.Console.WriteLine($"📊 Total unique articles collected: {articles.Count}");
+                
+                if (articles.Count > 0)
+                {
+                    System.Console.WriteLine($"\n🏷️  Top Tech Tags from NewsAPI:");
+                    var topTags = articles.SelectMany(a => a.TechTags).GroupBy(t => t).OrderByDescending(g => g.Count()).Take(5);
+                    foreach (var tag in topTags)
+                    {
+                        System.Console.WriteLine($"  {tag.Key}: {tag.Count()} mentions");
+                    }
+                }
+                
                 return articles;
             }
             catch (Exception ex)
