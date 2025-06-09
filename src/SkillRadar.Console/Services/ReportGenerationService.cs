@@ -9,10 +9,11 @@ namespace SkillRadar.Console.Services
 {
     public class ReportGenerationService
     {
-        public async Task GenerateConsoleReportAsync(TrendReport report)
+        public Task GenerateConsoleReportAsync(TrendReport report)
         {
             var output = GenerateReportContent(report);
             System.Console.WriteLine(output);
+            return Task.CompletedTask;
         }
 
         public async Task GenerateFileReportAsync(TrendReport report, string filePath, string format = "markdown")

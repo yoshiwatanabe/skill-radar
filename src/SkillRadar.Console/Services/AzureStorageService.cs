@@ -48,7 +48,11 @@ namespace SkillRadar.Console.Services
                 var bytes = Encoding.UTF8.GetBytes(content);
                 
                 using var stream = new MemoryStream(bytes);
-                await blobClient.UploadAsync(stream, new BlobHttpHeaders { ContentType = contentType }, overwrite: true);
+                var uploadOptions = new BlobUploadOptions
+                {
+                    HttpHeaders = new BlobHttpHeaders { ContentType = contentType }
+                };
+                await blobClient.UploadAsync(stream, uploadOptions);
                 
                 System.Console.WriteLine($"✅ Uploaded report: {fileName} to Azure Storage");
             }
@@ -76,7 +80,11 @@ namespace SkillRadar.Console.Services
                 var bytes = Encoding.UTF8.GetBytes(json);
                 
                 using var stream = new MemoryStream(bytes);
-                await blobClient.UploadAsync(stream, new BlobHttpHeaders { ContentType = "application/json" }, overwrite: true);
+                var uploadOptions = new BlobUploadOptions
+                {
+                    HttpHeaders = new BlobHttpHeaders { ContentType = "application/json" }
+                };
+                await blobClient.UploadAsync(stream, uploadOptions);
                 
                 System.Console.WriteLine($"✅ Uploaded {articles.Count} articles: {fileName} to Azure Storage");
             }
@@ -104,7 +112,11 @@ namespace SkillRadar.Console.Services
                 var bytes = Encoding.UTF8.GetBytes(json);
                 
                 using var stream = new MemoryStream(bytes);
-                await blobClient.UploadAsync(stream, new BlobHttpHeaders { ContentType = "application/json" }, overwrite: true);
+                var uploadOptions = new BlobUploadOptions
+                {
+                    HttpHeaders = new BlobHttpHeaders { ContentType = "application/json" }
+                };
+                await blobClient.UploadAsync(stream, uploadOptions);
                 
                 System.Console.WriteLine($"✅ Uploaded trend report: {fileName} to Azure Storage");
             }

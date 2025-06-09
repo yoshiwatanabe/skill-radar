@@ -141,6 +141,11 @@ appsettings.development.json
 .env.development
 .env.production
 
+# Secrets templates (to prevent accidental commits)
+SECRETS_TEMPLATE.md
+*secrets*
+*SECRETS*
+
 # IDE
 .vscode/
 .idea/
