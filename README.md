@@ -431,3 +431,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Built with ❤️ for the developer community**
 
 *SkillRadar helps you stay ahead of technology trends and focus your learning on what matters most.*
+
+*Last updated: June 2025*
