@@ -197,25 +197,24 @@ namespace SkillRadar.Console
             {
                 UserProfile = new UserProfile
                 {
-                    Skills = new[] { "C#", "Azure", "Machine Learning", "DevOps" }.ToList(),
-                    Interests = new[] { "AI/ML", "Cloud Architecture", "Software Engineering" }.ToList(),
+                    Skills = new[] { "C#", ".NET", "Azure", "Cloud Architecture", "Machine Learning", "DevOps", "System Design" }.ToList(),
+                    Interests = new[] { "AI/ML", "LLM", "Cloud Engineering", "Software Architecture", "Platform Engineering", "Distributed Systems", "Backend Development" }.ToList(),
                     CareerStage = "Senior",
-                    LearningGoals = new[] { "System Design", "AI Implementation", "Leadership" }.ToList()
+                    LearningGoals = new[] { "Advanced System Design", "AI Engineering", "Cloud-Native Architecture", "Leadership", "Platform Engineering" }.ToList()
                 },
                 DataSources = new Dictionary<string, DataSource>
                 {
-                    ["HackerNews"] = new DataSource { Enabled = true, Priority = "High" },
+                    ["HackerNews"] = new DataSource { Enabled = true },
                     ["Reddit"] = new DataSource 
                     { 
-                        Enabled = true, 
-                        Priority = "Medium",
-                        Subreddits = new[] { "programming", "MachineLearning", "dotnet", "AZURE", "devops" }.ToList()
+                        Enabled = true,
+                        Subreddits = new[] { "programming", "MachineLearning", "dotnet", "azure", "devops", "softwarearchitecture" }.ToList()
                     },
-                    ["NewsAPI"] = new DataSource { Enabled = true, Priority = "Low", Categories = new[] { "technology" }.ToList() }
+                    ["NewsAPI"] = new DataSource { Enabled = true, Categories = new[] { "technology" }.ToList() }
                 },
                 ReportSettings = new ReportSettings
                 {
-                    MaxArticlesPerSource = 50,
+                    MaxArticlesPerSource = 30, // Reduce to prevent any single source from dominating
                     TopTrendsCount = 5,
                     MustReadCount = 10,
                     OutputFormats = new[] { "Console", "File" }.ToList()

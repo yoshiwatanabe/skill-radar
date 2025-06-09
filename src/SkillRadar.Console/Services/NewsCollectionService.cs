@@ -102,7 +102,7 @@ namespace SkillRadar.Console.Services
             try
             {
                 var articles = new List<Article>();
-                var subreddits = new[] { "programming", "MachineLearning", "dotnet", "AZURE", "devops" };
+                var subreddits = new[] { "programming", "MachineLearning", "dotnet", "azure", "devops", "softwarearchitecture" };
 
                 foreach (var subreddit in subreddits)
                 {
@@ -216,11 +216,14 @@ namespace SkillRadar.Console.Services
         {
             var techKeywords = new[]
             {
-                "AI", "Machine Learning", "ML", "Azure", "AWS", "Cloud", "Docker", "Kubernetes",
-                "React", "Angular", "Vue", "JavaScript", "TypeScript", "Python", "C#", "Java",
-                "DevOps", "CI/CD", "Microservices", "API", "REST", "GraphQL", "Database",
-                "Security", "Blockchain", "IoT", "AR", "VR", "Mobile", "iOS", "Android",
-                "Frontend", "Backend", "Fullstack", "Framework", "Library", "Open Source"
+                "AI", "Machine Learning", "ML", "LLM", "GPT", "Azure", "AWS", "GCP", "Cloud", 
+                "Docker", "Kubernetes", "Container", "Serverless", "C#", ".NET", "ASP.NET",
+                "Python", "JavaScript", "TypeScript", "Rust", "Go", "Java", "DevOps", "CI/CD", 
+                "Microservices", "API", "REST", "GraphQL", "Database", "SQL", "NoSQL",
+                "Security", "Cybersecurity", "Authentication", "OAuth", "Distributed Systems",
+                "Architecture", "System Design", "Performance", "Scalability", "Monitoring",
+                "Infrastructure", "SRE", "Platform Engineering", "Backend", "Framework", 
+                "Library", "Open Source", "Git", "GitHub", "Deployment", "Testing"
             };
 
             return techKeywords.Where(keyword => 
@@ -246,7 +249,7 @@ namespace SkillRadar.Console.Services
             try
             {
                 var articles = new List<Article>();
-                var subreddits = new[] { "programming", "MachineLearning", "dotnet", "AZURE", "devops" };
+                var subreddits = new[] { "programming", "MachineLearning", "dotnet", "azure", "devops", "softwarearchitecture" };
 
                 System.Console.WriteLine($"🔍 Testing Reddit API access...");
                 
