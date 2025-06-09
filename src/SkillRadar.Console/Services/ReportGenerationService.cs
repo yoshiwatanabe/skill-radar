@@ -121,17 +121,7 @@ namespace SkillRadar.Console.Services
                 }
             }
 
-            if (report.LearningRecommendations.Any())
-            {
-                sb.AppendLine("🎯 THIS WEEK'S LEARNING FOCUS");
-                sb.AppendLine("-".PadRight(40, '-'));
-                
-                foreach (var recommendation in report.LearningRecommendations)
-                {
-                    sb.AppendLine($"• {recommendation}");
-                }
-                sb.AppendLine();
-            }
+            // Learning recommendations removed - now integrated in trending analysis
 
             if (report.TechKeywordFrequency.Any())
             {

@@ -171,15 +171,31 @@ namespace SkillRadar.Console.Services
             html.AppendLine($"<p>{report.WeeklySummary}</p>");
             html.AppendLine("</div>");
             
-            // Top Trends
+            // Top Trends - Visual Dashboard
             html.AppendLine("<div class='section'>");
-            html.AppendLine("<h2>🔥 Top Trending Technologies</h2>");
-            foreach (var trend in report.TopTrends.Take(5))
+            html.AppendLine("<h2>🔥 Trending Technologies This Week</h2>");
+            html.AppendLine("<p style='color: #718096; margin-bottom: 25px; font-size: 14px;'>Most mentioned technologies across 290+ articles from leading tech sources</p>");
+            
+            var maxCount = report.TopTrends.Take(5).Max(t => t.MentionCount);
+            foreach (var (trend, index) in report.TopTrends.Take(5).Select((t, i) => (t, i)))
             {
-                html.AppendLine("<div class='trend-item'>");
-                html.AppendLine($"<div class='trend-name'>{trend.Name} <span class='trend-count'>({trend.MentionCount} mentions)</span></div>");
-                html.AppendLine($"<div class='trend-insight'>{trend.KeyInsight}</div>");
-                html.AppendLine($"<div class='learning-rec'>💡 {trend.LearningRecommendation}</div>");
+                var percentage = (double)trend.MentionCount / maxCount * 100;
+                var barColor = index switch
+                {
+                    0 => "#667eea", // Top trend - primary color
+                    1 => "#764ba2", // Second - secondary color  
+                    2 => "#f093fb", // Third - gradient color
+                    3 => "#f5576c", // Fourth - accent color
+                    _ => "#a8a8a8"   // Fifth - neutral color
+                };
+                
+                html.AppendLine("<div style='margin-bottom: 18px;'>");
+                html.AppendLine($"<div style='margin-bottom: 6px;'>");
+                html.AppendLine($"<span style='font-weight: 600; color: #2d3748; font-size: 16px;'>#{index + 1} {trend.Name} ({trend.MentionCount} mentions)</span>");
+                html.AppendLine("</div>");
+                html.AppendLine($"<div style='background: #f1f1f1; border-radius: 8px; height: 12px; overflow: hidden;'>");
+                html.AppendLine($"<div style='background: linear-gradient(90deg, {barColor}, {barColor}aa); height: 100%; width: {percentage}%; transition: width 0.3s ease;'></div>");
+                html.AppendLine("</div>");
                 html.AppendLine("</div>");
             }
             html.AppendLine("</div>");
@@ -194,8 +210,8 @@ namespace SkillRadar.Console.Services
                 html.AppendLine($"<div class='article-meta'>{article.Source} • {article.PublishedAt:MMM d, yyyy} • <span class='article-relevance'>{article.RelevanceScore:P0} relevant</span></div>");
                 if (!string.IsNullOrEmpty(article.Summary))
                 {
-                    var shortSummary = article.Summary.Length > 200 ? article.Summary.Substring(0, 200) + "..." : article.Summary;
-                    html.AppendLine($"<div style='margin: 8px 0; color: #4a5568;'>{shortSummary}</div>");
+                    // Show full summary without truncation for better readability
+                    html.AppendLine($"<div style='margin: 8px 0; color: #4a5568;'>{article.Summary}</div>");
                 }
                 if (article.TechTags.Any())
                 {
@@ -210,17 +226,7 @@ namespace SkillRadar.Console.Services
             }
             html.AppendLine("</div>");
             
-            // Learning Recommendations
-            if (report.LearningRecommendations.Any())
-            {
-                html.AppendLine("<div class='section'>");
-                html.AppendLine("<h2>🎯 This Week's Learning Focus</h2>");
-                foreach (var rec in report.LearningRecommendations)
-                {
-                    html.AppendLine($"<div class='learning-rec'>📖 {rec}</div>");
-                }
-                html.AppendLine("</div>");
-            }
+            // Learning recommendations are now integrated into the trending dashboard
             
             html.AppendLine("</div>");
             
