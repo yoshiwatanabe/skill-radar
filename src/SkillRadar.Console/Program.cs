@@ -13,6 +13,13 @@ namespace SkillRadar.Console
         // Fixed Console namespace conflicts for GitHub Actions CI/CD
         static async Task Main(string[] args)
         {
+            // Check for debug mode
+            if (args.Length > 0 && args[0] == "--debug-sources")
+            {
+                await DebugDataSources(args);
+                return;
+            }
+
             System.Console.WriteLine("🔍 SkillRadar - Weekly Technology Trend Analysis");
             System.Console.WriteLine("================================================");
             System.Console.WriteLine();
@@ -226,6 +233,163 @@ namespace SkillRadar.Console
         private static DateTime GetWeekEnd(DateTime weekStart)
         {
             return weekStart.AddDays(6); // Following Saturday
+        }
+
+        private static async Task DebugDataSources(string[] args)
+        {
+            System.Console.WriteLine("🔍 SkillRadar - Data Source Debug Tool");
+            System.Console.WriteLine("=====================================");
+            System.Console.WriteLine();
+
+            // Load environment variables from .env file
+            EnvironmentLoader.LoadFromFile();
+
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "SkillRadar/1.0 (Technology Trend Analyzer)");
+
+            var newsService = new NewsCollectionService(
+                httpClient,
+                Environment.GetEnvironmentVariable("NEWS_API_KEY"),
+                Environment.GetEnvironmentVariable("REDDIT_CLIENT_ID"),
+                Environment.GetEnvironmentVariable("REDDIT_CLIENT_SECRET")
+            );
+
+            var weekStart = GetWeekStart();
+            var weekEnd = GetWeekEnd(weekStart);
+
+            System.Console.WriteLine($"📅 Testing data sources for week: {weekStart:MMM d} - {weekEnd:MMM d, yyyy}");
+            System.Console.WriteLine();
+
+            // Test each source separately
+            await TestHackerNews(newsService, weekStart, weekEnd);
+            System.Console.WriteLine();
+            await TestReddit(newsService, weekStart, weekEnd);
+            System.Console.WriteLine();
+            await TestNewsAPI(newsService, weekStart, weekEnd);
+        }
+
+        private static async Task TestHackerNews(NewsCollectionService newsService, DateTime weekStart, DateTime weekEnd)
+        {
+            System.Console.WriteLine("🗞️  HACKER NEWS TEST");
+            System.Console.WriteLine("====================");
+            
+            try
+            {
+                var articles = await newsService.CollectHackerNewsDebugAsync(weekStart, weekEnd);
+                System.Console.WriteLine($"✅ Collected {articles.Count} articles from Hacker News");
+                
+                System.Console.WriteLine("\n📊 Sample articles:");
+                foreach (var article in articles.Take(5))
+                {
+                    System.Console.WriteLine($"  • {article.Title}");
+                    System.Console.WriteLine($"    Score: {article.Score}, Published: {article.PublishedAt:MMM d HH:mm}");
+                    System.Console.WriteLine($"    Tags: {string.Join(", ", article.TechTags)}");
+                    System.Console.WriteLine($"    URL: {article.Url}");
+                    System.Console.WriteLine();
+                }
+
+                // Show tech tag distribution
+                var techTags = articles.SelectMany(a => a.TechTags).GroupBy(t => t).OrderByDescending(g => g.Count()).Take(10);
+                System.Console.WriteLine("🏷️  Top Tech Tags:");
+                foreach (var tag in techTags)
+                {
+                    System.Console.WriteLine($"  {tag.Key}: {tag.Count()} mentions");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"❌ Error testing Hacker News: {ex.Message}");
+            }
+        }
+
+        private static async Task TestReddit(NewsCollectionService newsService, DateTime weekStart, DateTime weekEnd)
+        {
+            System.Console.WriteLine("🔴 REDDIT TEST");
+            System.Console.WriteLine("===============");
+            
+            try
+            {
+                var articles = await newsService.CollectRedditDebugAsync(weekStart, weekEnd);
+                System.Console.WriteLine($"✅ Collected {articles.Count} articles from Reddit");
+                
+                if (articles.Count > 0)
+                {
+                    System.Console.WriteLine("\n📊 Sample articles:");
+                    foreach (var article in articles.Take(5))
+                    {
+                        System.Console.WriteLine($"  • {article.Title}");
+                        System.Console.WriteLine($"    Subreddit: {article.Source}, Score: {article.Score}");
+                        System.Console.WriteLine($"    Tags: {string.Join(", ", article.TechTags)}");
+                        System.Console.WriteLine($"    URL: {article.Url}");
+                        System.Console.WriteLine();
+                    }
+
+                    // Show subreddit distribution
+                    var subreddits = articles.GroupBy(a => a.Source).OrderByDescending(g => g.Count());
+                    System.Console.WriteLine("📊 Articles by Subreddit:");
+                    foreach (var sub in subreddits)
+                    {
+                        System.Console.WriteLine($"  {sub.Key}: {sub.Count()} articles");
+                    }
+
+                    // Show tech tag distribution
+                    var techTags = articles.SelectMany(a => a.TechTags).GroupBy(t => t).OrderByDescending(g => g.Count()).Take(10);
+                    System.Console.WriteLine("\n🏷️  Top Tech Tags:");
+                    foreach (var tag in techTags)
+                    {
+                        System.Console.WriteLine($"  {tag.Key}: {tag.Count()} mentions");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"❌ Error testing Reddit: {ex.Message}");
+            }
+        }
+
+        private static async Task TestNewsAPI(NewsCollectionService newsService, DateTime weekStart, DateTime weekEnd)
+        {
+            System.Console.WriteLine("📰 NEWSAPI TEST");
+            System.Console.WriteLine("===============");
+            
+            try
+            {
+                var articles = await newsService.CollectNewsApiDebugAsync(weekStart, weekEnd);
+                System.Console.WriteLine($"✅ Collected {articles.Count} articles from NewsAPI");
+                
+                if (articles.Count > 0)
+                {
+                    System.Console.WriteLine("\n📊 Sample articles:");
+                    foreach (var article in articles.Take(5))
+                    {
+                        System.Console.WriteLine($"  • {article.Title}");
+                        System.Console.WriteLine($"    Source: {article.Source}, Published: {article.PublishedAt:MMM d HH:mm}");
+                        System.Console.WriteLine($"    Tags: {string.Join(", ", article.TechTags)}");
+                        System.Console.WriteLine($"    URL: {article.Url}");
+                        System.Console.WriteLine();
+                    }
+
+                    // Show source distribution
+                    var sources = articles.GroupBy(a => a.Source).OrderByDescending(g => g.Count());
+                    System.Console.WriteLine("📊 Articles by News Source:");
+                    foreach (var source in sources)
+                    {
+                        System.Console.WriteLine($"  {source.Key}: {source.Count()} articles");
+                    }
+
+                    // Show tech tag distribution
+                    var techTags = articles.SelectMany(a => a.TechTags).GroupBy(t => t).OrderByDescending(g => g.Count()).Take(10);
+                    System.Console.WriteLine("\n🏷️  Top Tech Tags:");
+                    foreach (var tag in techTags)
+                    {
+                        System.Console.WriteLine($"  {tag.Key}: {tag.Count()} mentions");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"❌ Error testing NewsAPI: {ex.Message}");
+            }
         }
     }
 

@@ -108,8 +108,19 @@ namespace SkillRadar.Console.Services
                 {
                     try
                     {
-                        var response = await _httpClient.GetStringAsync($"https://www.reddit.com/r/{subreddit}/hot.json?limit=50");
-                        var redditResponse = JsonSerializer.Deserialize<RedditResponse>(response);
+                        // Create request with proper headers for Reddit JSON API
+                        using var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.reddit.com/r/{subreddit}/hot.json?limit=50");
+                        request.Headers.Add("Accept", "application/json");
+                        
+                        var httpResponse = await _httpClient.SendAsync(request);
+                        var response = await httpResponse.Content.ReadAsStringAsync();
+                        
+                        var jsonOptions = new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        };
+                        
+                        var redditResponse = JsonSerializer.Deserialize<RedditResponse>(response, jsonOptions);
 
                         if (redditResponse?.Data?.Children != null)
                         {
@@ -222,6 +233,178 @@ namespace SkillRadar.Console.Services
                 .GroupBy(a => new { a.Url, NormalizedTitle = a.Title.Trim().ToLowerInvariant() })
                 .Select(g => g.OrderByDescending(a => a.Score).First())
                 .ToList();
+        }
+
+        // Debug methods to test each source separately
+        public async Task<List<Article>> CollectHackerNewsDebugAsync(DateTime weekStart, DateTime weekEnd)
+        {
+            return await CollectHackerNewsAsync(weekStart, weekEnd);
+        }
+
+        public async Task<List<Article>> CollectRedditDebugAsync(DateTime weekStart, DateTime weekEnd)
+        {
+            try
+            {
+                var articles = new List<Article>();
+                var subreddits = new[] { "programming", "MachineLearning", "dotnet", "AZURE", "devops" };
+
+                System.Console.WriteLine($"🔍 Testing Reddit API access...");
+                
+                foreach (var subreddit in subreddits)
+                {
+                    try
+                    {
+                        System.Console.WriteLine($"  📡 Fetching from r/{subreddit}...");
+                        
+                        // Create request with proper headers for Reddit JSON API
+                        using var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.reddit.com/r/{subreddit}/hot.json?limit=10");
+                        request.Headers.Add("Accept", "application/json");
+                        
+                        var httpResponse = await _httpClient.SendAsync(request);
+                        var response = await httpResponse.Content.ReadAsStringAsync();
+                        
+                        var jsonOptions = new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        };
+                        
+                        var redditResponse = JsonSerializer.Deserialize<RedditResponse>(response, jsonOptions);
+
+                        if (redditResponse?.Data?.Children != null && redditResponse.Data.Children.Length > 0)
+                        {
+                            System.Console.WriteLine($"  ✅ Got {redditResponse.Data.Children.Length} posts from r/{subreddit}");
+                            
+                            foreach (var child in redditResponse.Data.Children)
+                            {
+                                var post = child.Data;
+                                if (post != null && post.Created_utc.HasValue)
+                                {
+                                    var publishedAt = DateTimeOffset.FromUnixTimeSeconds((long)post.Created_utc.Value).DateTime;
+                                    
+                                    System.Console.WriteLine($"    • {post.Title} (Published: {publishedAt:MMM d HH:mm})");
+                                    
+                                    // For debug, collect ALL articles regardless of date
+                                    if (!string.IsNullOrEmpty(post.Url))
+                                    {
+                                        var article = new Article
+                                        {
+                                            Id = $"reddit_{post.Id}",
+                                            Title = post.Title ?? "",
+                                            Summary = post.Selftext ?? "",
+                                            Url = post.Url,
+                                            Source = $"Reddit r/{subreddit}",
+                                            PublishedAt = publishedAt,
+                                            Score = post.Score ?? 0,
+                                            TechTags = ExtractTechTags($"{post.Title} {post.Selftext}")
+                                        };
+                                        articles.Add(article);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            System.Console.WriteLine($"  ❌ No data returned from r/{subreddit}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.WriteLine($"  ❌ Error fetching r/{subreddit}: {ex.Message}");
+                    }
+                }
+
+                System.Console.WriteLine($"📊 Total articles collected: {articles.Count}");
+                return articles;
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"❌ Reddit debug failed: {ex.Message}");
+                return new List<Article>();
+            }
+        }
+
+        public async Task<List<Article>> CollectNewsApiDebugAsync(DateTime weekStart, DateTime weekEnd)
+        {
+            if (string.IsNullOrEmpty(_newsApiKey))
+            {
+                System.Console.WriteLine("❌ NewsAPI key not provided");
+                return new List<Article>();
+            }
+
+            try
+            {
+                var articles = new List<Article>();
+                var fromDate = weekStart.ToString("yyyy-MM-dd");
+                var toDate = weekEnd.ToString("yyyy-MM-dd");
+                
+                var url = $"https://newsapi.org/v2/everything?q=technology&from={fromDate}&to={toDate}&sortBy=popularity&apiKey={_newsApiKey}&pageSize=20";
+                
+                System.Console.WriteLine($"🔍 Testing NewsAPI access...");
+                System.Console.WriteLine($"  📡 API Key: {_newsApiKey.Substring(0, 8)}...");
+                System.Console.WriteLine($"  📅 Date range: {fromDate} to {toDate}");
+                System.Console.WriteLine($"  🌐 URL: {url.Replace(_newsApiKey, "***API_KEY***")}");
+                
+                var response = await _httpClient.GetStringAsync(url);
+                System.Console.WriteLine($"  📄 Response length: {response.Length} characters");
+                
+                // Show first part of response to debug structure
+                System.Console.WriteLine($"  📋 Response preview: {response.Substring(0, Math.Min(200, response.Length))}...");
+                
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                
+                var newsResponse = JsonSerializer.Deserialize<NewsApiResponse>(response, jsonOptions);
+
+                if (newsResponse?.Articles != null && newsResponse.Articles.Length > 0)
+                {
+                    System.Console.WriteLine($"  ✅ Got {newsResponse.Articles.Length} articles from NewsAPI");
+                    
+                    foreach (var article in newsResponse.Articles)
+                    {
+                        if (article.PublishedAt.HasValue && !string.IsNullOrEmpty(article.Url))
+                        {
+                            System.Console.WriteLine($"    • {article.Title} (Published: {article.PublishedAt:MMM d HH:mm})");
+                            System.Console.WriteLine($"      Source: {article.Source?.Name}, URL: {article.Url}");
+                            
+                            var newArticle = new Article
+                            {
+                                Id = $"newsapi_{article.Url.GetHashCode()}",
+                                Title = article.Title ?? "",
+                                Summary = article.Description ?? "",
+                                Url = article.Url,
+                                Source = article.Source?.Name ?? "NewsAPI",
+                                PublishedAt = article.PublishedAt.Value,
+                                Score = 0, // NewsAPI doesn't provide scores
+                                TechTags = ExtractTechTags($"{article.Title} {article.Description}")
+                            };
+                            articles.Add(newArticle);
+                        }
+                    }
+                }
+                else if (newsResponse != null)
+                {
+                    System.Console.WriteLine($"  ❌ NewsAPI returned empty results");
+                    System.Console.WriteLine($"  🔍 Articles array is null or empty");
+                }
+                else
+                {
+                    System.Console.WriteLine($"  ❌ Failed to parse NewsAPI response");
+                }
+
+                System.Console.WriteLine($"📊 Total articles collected: {articles.Count}");
+                return articles;
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"❌ NewsAPI debug failed: {ex.Message}");
+                if (ex.Message.Contains("401") || ex.Message.Contains("Unauthorized"))
+                {
+                    System.Console.WriteLine("  🔑 This looks like an API key authentication issue");
+                }
+                return new List<Article>();
+            }
         }
     }
 
