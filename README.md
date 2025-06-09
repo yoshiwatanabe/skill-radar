@@ -11,6 +11,8 @@
 - **AI-Powered Analysis**: Uses OpenAI to identify trends and generate insights
 - **Personalized Recommendations**: Tailors learning suggestions based on your profile
 - **Multiple Output Formats**: Console, Markdown, HTML, and JSON reports
+- **📧 Email Notifications**: Beautiful HTML email reports with Azure Communication Services
+- **🌐 Multi-Language Support**: Optional Japanese translations for bilingual developers
 - **Azure Cloud Infrastructure**: Scalable deployment with automated scheduling
 - **GitHub Actions CI/CD**: Automated deployment and weekly execution
 
@@ -66,6 +68,11 @@ export OPENAI_API_KEY="your-openai-api-key"
 export NEWS_API_KEY="your-newsapi-key"          # Optional
 export REDDIT_CLIENT_ID="your-reddit-id"        # Optional
 export REDDIT_CLIENT_SECRET="your-reddit-secret" # Optional
+
+# Email Notifications (Optional)
+export AZURE_COMMUNICATION_CONNECTION_STRING="endpoint=https://...;accesskey=..."
+export EMAIL_SENDER_ADDRESS="DoNotReply@...azurecomm.net"
+export EMAIL_RECIPIENT_ADDRESS="your-email@domain.com"
 ```
 
 ### 3. Deploy Infrastructure
@@ -107,26 +114,96 @@ skill-radar/
 
 ## 🏗️ Architecture
 
+```mermaid
+graph TB
+    subgraph "Data Sources"
+        HN["🗞️ Hacker News<br/>API"]
+        RD["🔴 Reddit<br/>API"]
+        NA["📰 NewsAPI"]
+    end
+
+    subgraph "SkillRadar Core"
+        NC["📚 NewsCollection<br/>Service"]
+        TA["🤖 TrendAnalysis<br/>Service (OpenAI)"]
+        RG["📊 ReportGeneration<br/>Service"]
+        EN["📧 EmailNotification<br/>Service"]
+        TS["🌐 Translation<br/>Service (OpenAI)"]
+    end
+
+    subgraph "Azure Infrastructure"
+        SA["💾 Storage Account<br/>(Articles & Reports)"]
+        KV["🔐 Key Vault<br/>(API Keys)"]
+        ACS["📨 Communication Services<br/>(Email)"]
+        CI["🐳 Container Instances<br/>(Execution)"]
+        LA["⏰ Logic Apps<br/>(Scheduling)"]
+    end
+
+    subgraph "Output"
+        CO["💻 Console Report"]
+        FM["📄 File Reports<br/>(MD, HTML, JSON)"]
+        EM["📧 Email Report<br/>(with translations)"]
+    end
+
+    HN --> NC
+    RD --> NC
+    NA --> NC
+    
+    NC --> TA
+    TA --> RG
+    RG --> EN
+    TA --> TS
+    TS --> EN
+    
+    KV --> NC
+    KV --> TA
+    KV --> EN
+    KV --> TS
+    
+    SA --> NC
+    SA --> RG
+    ACS --> EN
+    
+    RG --> CO
+    RG --> FM
+    EN --> EM
+    
+    LA --> CI
+    CI --> NC
+
+    style HN fill:#ff9999
+    style RD fill:#ff6666
+    style NA fill:#ff9999
+    style TA fill:#99ccff
+    style TS fill:#99ccff
+    style EN fill:#99ff99
+    style ACS fill:#99ff99
+    style EM fill:#99ff99
+```
+
 ### Core Services
 
 - **NewsCollectionService**: Collects articles from multiple APIs
-- **TrendAnalysisService**: Analyzes trends using OpenAI
+- **TrendAnalysisService**: Analyzes trends using OpenAI GPT models
 - **ReportGenerationService**: Generates reports in multiple formats
+- **EmailNotificationService**: Sends beautiful HTML email reports via Azure Communication Services
+- **TranslationService**: Provides multilingual support using OpenAI for translations
 
 ### Azure Infrastructure
 
-- **Storage Account**: Article data persistence
+- **Storage Account**: Article data persistence and report archiving
 - **Key Vault**: Secure API key management
-- **Container Instances**: Serverless execution
-- **Logic Apps**: Weekly scheduling
+- **Communication Services**: Email delivery infrastructure
+- **Container Instances**: Serverless execution environment
+- **Logic Apps**: Weekly scheduling automation
 
 ### Data Flow
 
 1. **Collection**: Gather articles from Hacker News, Reddit, NewsAPI
 2. **Analysis**: AI-powered trend identification and summarization
-3. **Personalization**: Match trends to user profile and interests
-4. **Generation**: Create comprehensive reports
-5. **Distribution**: Output to console, files, and future email integration
+3. **Translation**: Optional multilingual content generation
+4. **Personalization**: Match trends to user profile and interests
+5. **Generation**: Create comprehensive reports with visual dashboards
+6. **Distribution**: Email delivery, console output, and file generation
 
 ## ⚙️ Configuration
 
@@ -139,9 +216,23 @@ skill-radar/
     "Interests": ["AI/ML", "Cloud Architecture"],
     "CareerStage": "Senior",
     "LearningGoals": ["System Design", "AI Implementation"]
+  },
+  "EmailSettings": {
+    "Enabled": true,
+    "SendOnSuccess": true,
+    "SendOnError": true,
+    "SecondaryLanguage": "JA"
   }
 }
 ```
+
+### Email Configuration
+
+SkillRadar supports beautiful HTML email reports with optional multilingual content:
+
+- **SecondaryLanguage Options**: `None`, `JA` (Japanese), `ES` (Spanish), `FR` (French), `DE` (German), etc.
+- **Email Features**: Visual trending dashboard, article previews, consistent formatting
+- **Azure Communication Services**: Enterprise-grade email delivery
 
 ### Data Sources
 
@@ -163,10 +254,15 @@ skill-radar/
 
 ### Required
 - **OpenAI API Key**: Get from [OpenAI Platform](https://platform.openai.com/api-keys)
+  - Used for trend analysis and optional translations
+  - Supports GPT-3.5-turbo and GPT-4 models
 
-### Optional (for enhanced data collection)
+### Optional (for enhanced features)
 - **NewsAPI Key**: Get from [NewsAPI](https://newsapi.org/register)
 - **Reddit API**: Create app at [Reddit Apps](https://www.reddit.com/prefs/apps)
+- **Azure Communication Services**: Set up in [Azure Portal](https://portal.azure.com)
+  - Required for email notifications
+  - Provides sender domain and connection string
 
 ## 🚀 Deployment
 
@@ -185,6 +281,9 @@ skill-radar/
    - `NEWS_API_KEY` (optional)
    - `REDDIT_CLIENT_ID` (optional)
    - `REDDIT_CLIENT_SECRET` (optional)
+   - `AZURE_COMMUNICATION_CONNECTION_STRING` (optional)
+   - `EMAIL_SENDER_ADDRESS` (optional)
+   - `EMAIL_RECIPIENT_ADDRESS` (optional)
 
 ### Manual Deployment
 

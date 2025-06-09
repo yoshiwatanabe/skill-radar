@@ -152,10 +152,14 @@ namespace SkillRadar.Console
                 // Send email notification with results
                 System.Console.WriteLine();
                 System.Console.WriteLine("📧 Sending email notification...");
-                var emailSent = await emailService.SendWeeklyReportAsync(trendReport, articles);
+                var emailSent = await emailService.SendWeeklyReportAsync(trendReport, articles, config.EmailSettings.SecondaryLanguage);
                 if (emailSent)
                 {
                     System.Console.WriteLine("✅ Email notification sent successfully!");
+                    if (!config.EmailSettings.SecondaryLanguage.Equals("None", StringComparison.OrdinalIgnoreCase))
+                    {
+                        System.Console.WriteLine($"🌐 Email includes {config.EmailSettings.SecondaryLanguage} translations");
+                    }
                 }
                 else
                 {
@@ -433,5 +437,6 @@ namespace SkillRadar.Console
         public UserProfile UserProfile { get; set; } = new UserProfile();
         public Dictionary<string, DataSource> DataSources { get; set; } = new Dictionary<string, DataSource>();
         public ReportSettings ReportSettings { get; set; } = new ReportSettings();
+        public EmailSettings EmailSettings { get; set; } = new EmailSettings();
     }
 }

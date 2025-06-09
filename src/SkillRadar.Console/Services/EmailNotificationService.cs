@@ -40,7 +40,7 @@ namespace SkillRadar.Console.Services
             }
         }
 
-        public async Task<bool> SendWeeklyReportAsync(TrendReport report, List<Article> articles)
+        public async Task<bool> SendWeeklyReportAsync(TrendReport report, List<Article> articles, string secondaryLanguage = "None")
         {
             if (_emailClient == null || string.IsNullOrEmpty(_senderAddress) || string.IsNullOrEmpty(_recipientAddress))
             {
@@ -51,7 +51,7 @@ namespace SkillRadar.Console.Services
             try
             {
                 var subject = $"SkillRadar Weekly Analysis - {report.WeekStart:MMM d} to {report.WeekEnd:MMM d, yyyy}";
-                var htmlBody = GenerateEmailHtml(report, articles);
+                var htmlBody = await GenerateEmailHtmlAsync(report, articles, secondaryLanguage);
 
                 var emailMessage = new EmailMessage(
                     senderAddress: _senderAddress,
@@ -106,9 +106,16 @@ namespace SkillRadar.Console.Services
             }
         }
 
-        private string GenerateEmailHtml(TrendReport report, List<Article> articles)
+        private async Task<string> GenerateEmailHtmlAsync(TrendReport report, List<Article> articles, string secondaryLanguage = "None")
         {
             var html = new StringBuilder();
+            
+            // Initialize translation service if secondary language is requested
+            TranslationService? translationService = null;
+            if (!secondaryLanguage.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                translationService = new TranslationService(new HttpClient(), Environment.GetEnvironmentVariable("OPENAI_API_KEY"));
+            }
             
             html.AppendLine("<!DOCTYPE html>");
             html.AppendLine("<html><head>");
@@ -207,11 +214,34 @@ namespace SkillRadar.Console.Services
             {
                 html.AppendLine("<div class='article-item'>");
                 html.AppendLine($"<div class='article-title'><a href='{article.Url}' target='_blank'>{article.Title}</a></div>");
+                
+                // Add Japanese translation if enabled
+                if (translationService != null)
+                {
+                    var (titleTranslation, summaryTranslation) = await translationService.TranslateArticleAsync(article.Title, article.Summary ?? "", secondaryLanguage);
+                    if (!string.IsNullOrEmpty(titleTranslation))
+                    {
+                        html.AppendLine($"<div class='article-title-translation' style='font-size: 14px; color: #718096; margin: 4px 0; font-style: italic;'>🇯🇵 {titleTranslation}</div>");
+                    }
+                }
+                
                 html.AppendLine($"<div class='article-meta'>{article.Source} • {article.PublishedAt:MMM d, yyyy} • <span class='article-relevance'>{article.RelevanceScore:P0} relevant</span></div>");
                 if (!string.IsNullOrEmpty(article.Summary))
                 {
-                    // Show full summary without truncation for better readability
-                    html.AppendLine($"<div style='margin: 8px 0; color: #4a5568;'>{article.Summary}</div>");
+                    // Limit preview to 150 characters for consistent article heights
+                    var preview = article.Summary.Length > 150 ? article.Summary.Substring(0, 150) + "..." : article.Summary;
+                    html.AppendLine($"<div style='margin: 8px 0; color: #4a5568;'>{preview}</div>");
+                    
+                    // Add Japanese summary translation if enabled
+                    if (translationService != null)
+                    {
+                        var summaryForTranslation = article.Summary.Length > 150 ? article.Summary.Substring(0, 150) : article.Summary;
+                        var summaryTranslation = await translationService.TranslateAsync(summaryForTranslation, secondaryLanguage);
+                        if (!string.IsNullOrEmpty(summaryTranslation))
+                        {
+                            html.AppendLine($"<div style='margin: 8px 0; color: #9ca3af; font-size: 13px; font-style: italic;'>🇯🇵 {summaryTranslation}</div>");
+                        }
+                    }
                 }
                 if (article.TechTags.Any())
                 {

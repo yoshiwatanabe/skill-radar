@@ -25,4 +25,12 @@ namespace SkillRadar.Console.Models
         public int MustReadCount { get; set; }
         public List<string> OutputFormats { get; set; } = new List<string>();
     }
+
+    public class EmailSettings
+    {
+        public bool Enabled { get; set; } = true;
+        public bool SendOnSuccess { get; set; } = true;
+        public bool SendOnError { get; set; } = true;
+        public string SecondaryLanguage { get; set; } = "None";
+    }
 }
