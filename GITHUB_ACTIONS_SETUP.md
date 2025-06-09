@@ -57,6 +57,22 @@ Add this secret using the service principal you created:
    [Your Reddit API client secret]
    ```
 
+### Optional Secrets (Email Notifications)
+9. **AZURE_COMMUNICATION_CONNECTION_STRING** (for email reports)
+   ```
+   endpoint=https://skillradar-communication.unitedstates.communication.azure.com/;accesskey=...
+   ```
+
+10. **EMAIL_SENDER_ADDRESS** (Azure Communication Services sender)
+    ```
+    DoNotReply@33b94393-dbd1-42d1-baaf-520e954318a0.azurecomm.net
+    ```
+
+11. **EMAIL_RECIPIENT_ADDRESS** (your email for reports)
+    ```
+    your-email@domain.com
+    ```
+
 ## 🧪 Test the GitHub Actions Deployment
 
 ### Method 1: Manual Trigger
@@ -71,8 +87,9 @@ Add this secret using the service principal you created:
 2. Commit and push to main branch
 3. GitHub Actions will automatically trigger
 
-### Method 3: Scheduled Execution (Sundays 9AM JST)
-- The workflow is scheduled to run every Sunday at 9:00 AM JST
+### Method 3: Scheduled Execution (Thursdays 11PM JST)
+- The workflow is scheduled to run every Thursday at 11:00 PM JST (ready for Friday learning)
+- Runs automatically via cron: '0 14 * * 4' (14:00 UTC Thursday = 11:00 PM JST Thursday)
 - No manual intervention needed
 
 ## 📊 Monitor Execution
@@ -155,29 +172,37 @@ az container logs --resource-group skillradar-rg --name skillradar-dev-aci-lates
    - ✅ Container starts successfully
 
 3. **Execution Phase**:
-   - ✅ Articles collected from Hacker News
-   - ✅ AI analysis completed
-   - ✅ Reports generated
+   - ✅ Articles collected from Hacker News, Reddit, NewsAPI
+   - ✅ AI analysis and translation completed
+   - ✅ Reports generated (Console, HTML, JSON, Markdown)
+   - ✅ Email notification sent with visual dashboard
    - ✅ Files saved to storage
+   - ✅ Japanese translations included (if enabled)
 
 ### Sample Successful Output:
 ```
 🔍 SkillRadar - Weekly Technology Trend Analysis
 ================================================
 
-⚙️  Loaded environment variables from Azure
+⚙️  Loaded configuration from appsettings.json
+📧 Azure Communication Services initialized with connection string
 📅 Analyzing trends for week: Jun 8 - Jun 14, 2025
 
 📰 Collecting articles from multiple sources...
-✅ Collected 15 articles
+✅ Collected 298 articles
 
 🔍 Analyzing trends and generating insights...
 ✅ Analysis complete
 
 📊 Generating report...
-✅ Report saved to Azure Storage
+📧 Sending email notification...
+✅ Email notification sent successfully!
+🌐 Email includes JA translations
 
 🎉 SkillRadar analysis complete!
+📈 Processed 298 articles
+🔥 Identified 5 trending topics
+📚 Selected 10 must-read articles
 ```
 
 ## 🎯 Success Criteria
@@ -187,9 +212,11 @@ az container logs --resource-group skillradar-rg --name skillradar-dev-aci-lates
 - [ ] Container deploys successfully 
 - [ ] SkillRadar generates weekly report
 - [ ] Reports stored in Azure Storage
-- [ ] Scheduled execution works (Sundays)
+- [ ] Email notifications sent successfully
+- [ ] Japanese translations work (if enabled)
+- [ ] Scheduled execution works (Thursdays 11PM JST)
 
-Once all criteria are met, SkillRadar will automatically generate weekly technology trend reports every Sunday! 🎉
+Once all criteria are met, SkillRadar will automatically generate weekly technology trend reports with beautiful email notifications every Thursday night! 🎉
 
 ## 📋 Quick Reference
 

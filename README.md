@@ -1,7 +1,7 @@
 # 🔍 SkillRadar - Weekly Technology Trend Analysis System
 
-[![Infrastructure](https://github.com/your-username/skill-radar/actions/workflows/infrastructure.yml/badge.svg)](https://github.com/your-username/skill-radar/actions/workflows/infrastructure.yml)
-[![Application](https://github.com/your-username/skill-radar/actions/workflows/app-deploy.yml/badge.svg)](https://github.com/your-username/skill-radar/actions/workflows/app-deploy.yml)
+[![Infrastructure Deployment](https://github.com/yoshiwatanabe/skill-radar/actions/workflows/infrastructure.yml/badge.svg)](https://github.com/yoshiwatanabe/skill-radar/actions/workflows/infrastructure.yml)
+[![Application Build & Deploy](https://github.com/yoshiwatanabe/skill-radar/actions/workflows/app-deploy.yml/badge.svg)](https://github.com/yoshiwatanabe/skill-radar/actions/workflows/app-deploy.yml)
 
 **SkillRadar** is an automated weekly technology trend analysis system that collects articles from multiple sources, analyzes them using AI, and generates personalized learning recommendations. Every Sunday, it delivers a comprehensive report of the week's most important technology developments.
 
