@@ -155,37 +155,32 @@ jobs:
         echo "Resource Group: $RESOURCE_GROUP"
         echo "Image: ${{ steps.image.outputs.image }}"
         
-        # Update container group with new image (if available)
-        if [ "${{ github.event_name }}" != "schedule" ]; then
-          echo "Updating container group with new image..."
-          # Get the managed identity resource ID
-          IDENTITY_ID=$(az identity show --resource-group "$RESOURCE_GROUP" --name skillradar-identity --query id --output tsv)
-          
-          az container create \
-            --resource-group "$RESOURCE_GROUP" \
-            --name "$CONTAINER_GROUP_NAME-$(date +%Y%m%d-%H%M%S)" \
-            --image "${{ steps.image.outputs.image }}" \
-            --os-type Linux \
-            --restart-policy Never \
-            --assign-identity "$IDENTITY_ID" \
-            --environment-variables \
-              OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-              NEWS_API_KEY="${{ secrets.NEWS_API_KEY }}" \
-              REDDIT_CLIENT_ID="${{ secrets.REDDIT_CLIENT_ID }}" \
-              REDDIT_CLIENT_SECRET="${{ secrets.REDDIT_CLIENT_SECRET }}" \
-              AZURE_STORAGE_ACCOUNT_NAME="skillradardevstorage" \
-              AZURE_COMMUNICATION_CONNECTION_STRING="${{ secrets.AZURE_COMMUNICATION_CONNECTION_STRING }}" \
-              EMAIL_SENDER_ADDRESS="${{ secrets.EMAIL_SENDER_ADDRESS }}" \
-              EMAIL_RECIPIENT_ADDRESS="${{ secrets.EMAIL_RECIPIENT_ADDRESS }}" \
-            --cpu 1 \
-            --memory 2
-        else
-          # For scheduled runs, start the existing container group
-          echo "Starting existing container group..."
-          az container start \
-            --resource-group "$RESOURCE_GROUP" \
-            --name "$CONTAINER_GROUP_NAME" || true
-        fi
+        # Delete existing container if it exists (to avoid conflicts)
+        echo "Cleaning up existing container..."
+        az container delete \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$CONTAINER_GROUP_NAME" \
+          --yes || true
+        
+        # Create/update the static container with latest image
+        echo "Creating static container with image: ${{ steps.image.outputs.image }}"
+        az container create \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$CONTAINER_GROUP_NAME" \
+          --image "${{ steps.image.outputs.image }}" \
+          --os-type Linux \
+          --restart-policy Never \
+          --environment-variables \
+            OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+            NEWS_API_KEY="${{ secrets.NEWS_API_KEY }}" \
+            REDDIT_CLIENT_ID="${{ secrets.REDDIT_CLIENT_ID }}" \
+            REDDIT_CLIENT_SECRET="${{ secrets.REDDIT_CLIENT_SECRET }}" \
+            AZURE_STORAGE_ACCOUNT_NAME="skillradardevstorage" \
+            AZURE_COMMUNICATION_CONNECTION_STRING="${{ secrets.AZURE_COMMUNICATION_CONNECTION_STRING }}" \
+            EMAIL_SENDER_ADDRESS="${{ secrets.EMAIL_SENDER_ADDRESS }}" \
+            EMAIL_RECIPIENT_ADDRESS="${{ secrets.EMAIL_RECIPIENT_ADDRESS }}" \
+          --cpu 1 \
+          --memory 2
 
     - name: 'Monitor Execution'
       run: |
@@ -209,6 +204,7 @@ jobs:
             break
           elif [ "$STATE" == "Failed" ]; then
             echo "❌ Container execution failed"
+            az container logs --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_GROUP_NAME" --tail 50 || true
             exit 1
           elif [ "$STATE" == "NotFound" ]; then
             echo "⚠️ Container not found, may have been cleaned up"
@@ -218,12 +214,14 @@ jobs:
           sleep 10
         done
         
-        # Get container logs
-        echo "📋 Container logs:"
-        az container logs \
-          --resource-group "$RESOURCE_GROUP" \
-          --name "$CONTAINER_GROUP_NAME" \
-          --tail 100 || echo "No logs available"
+        # Get container logs for successful runs
+        if [ "$STATE" == "Succeeded" ]; then
+          echo "📋 Container logs:"
+          az container logs \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$CONTAINER_GROUP_NAME" \
+            --tail 100 || echo "No logs available"
+        fi
 
   notify:
     name: 'Notify Results'
