@@ -52,7 +52,10 @@ jobs:
           --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
           --template-file infrastructure/bicep/main.bicep \
           --parameters environment=${{ github.event.inputs.environment || 'dev' }} \
-          --parameters openAiApiKey=${{ secrets.OPENAI_API_KEY }}
+          --parameters openAiApiKey=${{ secrets.OPENAI_API_KEY }} \
+          --parameters newsApiKey="${{ secrets.NEWS_API_KEY }}" \
+          --parameters redditClientId="${{ secrets.REDDIT_CLIENT_ID }}" \
+          --parameters redditClientSecret="${{ secrets.REDDIT_CLIENT_SECRET }}"
 
   preview:
     name: 'Preview Infrastructure Changes'

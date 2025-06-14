@@ -159,7 +159,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       contentVersion: '1.0.0.0'
       parameters: {}
       triggers: {
-        'Weekly_Schedule': {
+        Weekly_Schedule: {
           recurrence: {
             frequency: 'Week'
             interval: 1
@@ -174,11 +174,11 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
         }
       }
       actions: {
-        'Start_Container_Instance': {
+        Start_Container_Instance: {
           type: 'Http'
           inputs: {
             method: 'POST'
-            uri: 'https://management.azure.com/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.ContainerInstance/containerGroups/${containerGroupName}/start?api-version=2023-05-01'
+            uri: '${environment().resourceManager}subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.ContainerInstance/containerGroups/${containerGroupName}/start?api-version=2023-05-01'
             authentication: {
               type: 'ManagedServiceIdentity'
             }
