@@ -55,15 +55,23 @@ jobs:
         export AZURE_CLI_DEBUG=1
         export AZURE_HTTP_USER_AGENT="GitHub-Actions-Debug"
         
-        # Show Azure CLI version and config
+        # Show Azure CLI version
         az version
-        az config list
+        
+        # Show current account info
+        echo "Current account before clearing:"
+        az account show || echo "No account logged in"
         
         # Clear any cached credentials that might be causing issues
+        echo "Clearing cached credentials..."
         az account clear || true
+        
+        # Re-login using service principal
+        echo "Re-logging in with service principal..."
         az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
         
         # Verify we can access the subscription
+        echo "Verifying account access:"
         az account show
         
         # Build with verbose output
