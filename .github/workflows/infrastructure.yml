@@ -45,9 +45,12 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: 'Validate Bicep Templates'
+    - name: 'Build Bicep Templates'
       run: |
         az bicep build --file infrastructure/bicep/main.bicep
+
+    - name: 'Validate Bicep Templates'
+      run: |
         az deployment group validate \
           --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
           --template-file infrastructure/bicep/main.bicep \
