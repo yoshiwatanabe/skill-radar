@@ -71,7 +71,8 @@ output storageAccountName string = storageAccount.name
 output storageAccountId string = storageAccount.id
 
 @description('Storage Account connection string')
-output connectionString string = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+@secure()
+output connectionString string = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${az.environment().suffixes.storage}'
 
 @description('Storage Account primary endpoint')
 output primaryEndpoint string = storageAccount.properties.primaryEndpoints.blob

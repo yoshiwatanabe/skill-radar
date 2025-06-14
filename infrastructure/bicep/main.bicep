@@ -128,10 +128,6 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
 // Give Container Instance access to Key Vault
 resource keyVaultAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2023-07-01' = {
   name: '${keyVaultName}/add'
-  dependsOn: [
-    keyVault
-    containerGroup
-  ]
   properties: {
     accessPolicies: [
       {
@@ -178,7 +174,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
           type: 'Http'
           inputs: {
             method: 'POST'
-            uri: '${environment().resourceManager}subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.ContainerInstance/containerGroups/${containerGroupName}/start?api-version=2023-05-01'
+            uri: '${az.environment().resourceManager}subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.ContainerInstance/containerGroups/${containerGroupName}/start?api-version=2023-05-01'
             authentication: {
               type: 'ManagedServiceIdentity'
             }
