@@ -47,8 +47,30 @@ jobs:
 
     - name: 'Build Bicep Templates'
       run: |
-        # Only build - skip validation to avoid Azure CLI bug
-        az bicep build --file infrastructure/bicep/main.bicep
+        # Enable maximum debugging
+        set -x
+        echo "Starting Bicep build with debug output..."
+        
+        # Set Azure CLI debug flags
+        export AZURE_CLI_DEBUG=1
+        export AZURE_HTTP_USER_AGENT="GitHub-Actions-Debug"
+        
+        # Show Azure CLI version and config
+        az version
+        az config list
+        
+        # Clear any cached credentials that might be causing issues
+        az account clear || true
+        az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        
+        # Verify we can access the subscription
+        az account show
+        
+        # Build with verbose output
+        echo "Building Bicep template..."
+        az bicep build --file infrastructure/bicep/main.bicep --verbose
+        
+        echo "Bicep build completed successfully"
 
   preview:
     name: 'Preview Infrastructure Changes'
