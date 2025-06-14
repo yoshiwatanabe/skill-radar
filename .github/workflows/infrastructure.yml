@@ -59,7 +59,6 @@ jobs:
           --parameters newsApiKey="${{ secrets.NEWS_API_KEY }}" \
           --parameters redditClientId="${{ secrets.REDDIT_CLIENT_ID }}" \
           --parameters redditClientSecret="${{ secrets.REDDIT_CLIENT_SECRET }}"
-          --no-wait
 
   preview:
     name: 'Preview Infrastructure Changes'
@@ -86,7 +85,6 @@ jobs:
           --parameters newsApiKey=${{ secrets.NEWS_API_KEY }} \
           --parameters redditClientId=${{ secrets.REDDIT_CLIENT_ID }} \
           --parameters redditClientSecret=${{ secrets.REDDIT_CLIENT_SECRET }}
-          --no-wait
 
   deploy:
     name: 'Deploy Infrastructure'
