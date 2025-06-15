@@ -14,6 +14,7 @@ namespace SkillRadar.Console.Services
             "NEWS_API_KEY", 
             "REDDIT_CLIENT_ID",
             "REDDIT_CLIENT_SECRET",
+            "AZURE_STORAGE_CONNECTION_STRING",
             "AZURE_COMMUNICATION_CONNECTION_STRING",
             "EMAIL_SENDER_ADDRESS",
             "EMAIL_RECIPIENT_ADDRESS"
