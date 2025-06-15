@@ -3,7 +3,17 @@
 [![Infrastructure Deployment](https://github.com/yoshiwatanabe/skill-radar/actions/workflows/infrastructure.yml/badge.svg)](https://github.com/yoshiwatanabe/skill-radar/actions/workflows/infrastructure.yml)
 [![Application Build & Deploy](https://github.com/yoshiwatanabe/skill-radar/actions/workflows/app-deploy.yml/badge.svg)](https://github.com/yoshiwatanabe/skill-radar/actions/workflows/app-deploy.yml)
 
-**SkillRadar** is an automated weekly technology trend analysis system that collects articles from multiple sources, analyzes them using AI, and generates personalized learning recommendations. Every Sunday, it delivers a comprehensive report of the week's most important technology developments.
+**SkillRadar** is an automated weekly technology trend analysis system that collects articles from multiple sources, analyzes them using AI, and generates personalized learning recommendations. Every Thursday at 11 PM JST, it delivers a comprehensive report of the week's most important technology developments.
+
+## 🏗️ Simple Architecture
+
+**Current Design Philosophy:** Simplified GitHub Actions-based approach for reliable weekly automation.
+
+- **Scheduling**: GitHub Actions cron jobs (every Thursday 11 PM JST)
+- **Secrets Management**: GitHub Repository Secrets
+- **Execution**: Dynamic Azure Container Instances
+- **Storage**: Azure Storage Account for persistence
+- **Notifications**: Azure Communication Services for email delivery
 
 ## 🎯 Features
 
@@ -112,7 +122,7 @@ skill-radar/
 └── README.md
 ```
 
-## 🏗️ Architecture
+## 📋 Detailed Architecture
 
 ```mermaid
 graph TB
@@ -120,6 +130,11 @@ graph TB
         HN["🗞️ Hacker News<br/>API"]
         RD["🔴 Reddit<br/>API"]
         NA["📰 NewsAPI"]
+    end
+
+    subgraph "GitHub Actions"
+        GH["⏰ GitHub Actions<br/>(Scheduled Workflow)"]
+        GS["🔐 GitHub Secrets<br/>(API Keys & Config)"]
     end
 
     subgraph "SkillRadar Core"
@@ -132,10 +147,8 @@ graph TB
 
     subgraph "Azure Infrastructure"
         SA["💾 Storage Account<br/>(Articles & Reports)"]
-        KV["🔐 Key Vault<br/>(API Keys)"]
         ACS["📨 Communication Services<br/>(Email)"]
         CI["🐳 Container Instances<br/>(Execution)"]
-        LA["⏰ Logic Apps<br/>(Scheduling)"]
     end
 
     subgraph "Output"
@@ -154,10 +167,10 @@ graph TB
     TA --> TS
     TS --> EN
     
-    KV --> NC
-    KV --> TA
-    KV --> EN
-    KV --> TS
+    GS --> NC
+    GS --> TA
+    GS --> EN
+    GS --> TS
     
     SA --> NC
     SA --> RG
@@ -167,7 +180,7 @@ graph TB
     RG --> FM
     EN --> EM
     
-    LA --> CI
+    GH --> CI
     CI --> NC
 
     style HN fill:#ff9999
@@ -178,6 +191,8 @@ graph TB
     style EN fill:#99ff99
     style ACS fill:#99ff99
     style EM fill:#99ff99
+    style GH fill:#ffcc99
+    style GS fill:#ffcc99
 ```
 
 ### Core Services
@@ -191,10 +206,15 @@ graph TB
 ### Azure Infrastructure
 
 - **Storage Account**: Article data persistence and report archiving
-- **Key Vault**: Secure API key management
 - **Communication Services**: Email delivery infrastructure
 - **Container Instances**: Serverless execution environment
-- **Logic Apps**: Weekly scheduling automation
+
+### GitHub Actions Infrastructure
+
+- **Scheduled Workflows**: Weekly automation (every Thursday at 11:00 PM JST)
+- **GitHub Secrets**: Secure API key and configuration management
+- **Container Registry**: Docker image storage and versioning
+- **Manual Triggers**: On-demand execution capabilities
 
 ### Data Flow
 
@@ -273,27 +293,51 @@ SkillRadar supports beautiful HTML email reports with optional multilingual cont
    ```bash
    az ad sp create-for-rbac --name "SkillRadar" --role contributor --scopes /subscriptions/{subscription-id}
    ```
-3. Add GitHub secrets:
-   - `AZURE_CLIENT_ID`
-   - `AZURE_TENANT_ID`
-   - `AZURE_SUBSCRIPTION_ID`
-   - `OPENAI_API_KEY`
-   - `NEWS_API_KEY` (optional)
-   - `REDDIT_CLIENT_ID` (optional)
-   - `REDDIT_CLIENT_SECRET` (optional)
-   - `AZURE_COMMUNICATION_CONNECTION_STRING` (optional)
-   - `EMAIL_SENDER_ADDRESS` (optional)
-   - `EMAIL_RECIPIENT_ADDRESS` (optional)
+3. Add required GitHub secrets (Settings → Secrets and variables → Actions):
 
-### Manual Deployment
+   **Required for Basic Functionality:**
+   - `AZURE_CREDENTIALS` - Azure service principal credentials (JSON format)
+   - `OPENAI_API_KEY` - OpenAI API key for trend analysis
+
+   **Optional for Enhanced Features:**
+   - `NEWS_API_KEY` - NewsAPI key for additional articles
+   - `REDDIT_CLIENT_ID` - Reddit API client ID
+   - `REDDIT_CLIENT_SECRET` - Reddit API client secret
+   - `AZURE_STORAGE_CONNECTION_STRING` - Azure Storage for persistence
+   - `AZURE_COMMUNICATION_CONNECTION_STRING` - Azure Communication Services for email
+   - `EMAIL_SENDER_ADDRESS` - Sender email address (e.g., DoNotReply@yourdomain.azurecomm.net)
+   - `EMAIL_RECIPIENT_ADDRESS` - Your email address for receiving reports
+
+   **Optional Azure Resource Configuration:**
+   - `AZURE_RESOURCE_GROUP` - Resource group name (defaults to 'skillradar-rg')
+   - `AZURE_CONTAINER_GROUP_NAME` - Container group name (defaults to 'skillradar-dev-aci')
+
+### Infrastructure Deployment
+
+The infrastructure templates deploy only the essential Azure resources:
 
 ```bash
-# Deploy infrastructure
+# Deploy minimal Azure infrastructure (Storage + Communication Services)
 cd infrastructure/scripts
 ./deploy.sh
+```
 
-# Build and run application
-cd ../../src/SkillRadar.Console
+**What gets deployed:**
+- Azure Storage Account (for data persistence)
+- Azure Communication Services (for email notifications)
+- Required RBAC permissions for GitHub Actions
+
+**What does NOT get deployed:**
+- Container Instances (created dynamically by GitHub Actions)
+- Key Vault (simplified architecture uses GitHub Secrets)
+- Logic Apps (removed in favor of GitHub Actions scheduling)
+
+### Local Development
+
+```bash
+# Build and run application locally
+cd src/SkillRadar.Console
+dotnet restore
 dotnet build
 dotnet run
 ```
@@ -302,43 +346,60 @@ dotnet run
 
 ### Azure Resources
 - Monitor Container Instance execution in Azure Portal
-- Check Key Vault for secret access
-- Review Storage Account for data persistence
+- Review Storage Account for article and report data
+- Check Communication Services for email delivery status
 
 ### GitHub Actions
+- Weekly execution results and logs
 - Infrastructure deployment status
-- Weekly execution results
-- Build and deployment logs
+- Build and deployment history
+- Secret management and access (Settings → Secrets)
+
+### Troubleshooting Workflow
+1. Check GitHub Actions logs for execution details
+2. Review Azure Container Instance logs in Azure Portal
+3. Verify email delivery in Azure Communication Services
+4. Check storage account for generated reports
 
 ## 🔄 Scheduled Execution
 
-The system runs automatically every Sunday at 9:00 AM JST via:
-- GitHub Actions scheduled workflow
-- Azure Logic Apps (backup scheduling)
+The system runs automatically every Thursday at 11:00 PM JST (14:00 UTC) via GitHub Actions scheduled workflow:
+
+```yaml
+schedule:
+  # Run every Thursday at 11:00 PM JST (14:00 UTC) - ready for Friday learning
+  - cron: '0 14 * * 4'
+```
 
 Manual execution:
 ```bash
-# Via GitHub Actions
+# Via GitHub Actions (recommended)
 gh workflow run app-deploy.yml
 
-# Via Azure CLI
-az container start --resource-group skillradar-rg --name skillradar-dev-aci
+# Via GitHub web interface
+# Go to Actions tab → Application Build & Deploy → Run workflow
+
+# Check execution status
+gh run list --workflow=app-deploy.yml
 ```
 
 ## 💰 Cost Estimation
 
 **Monthly Azure costs:**
-- Storage Account: ~$2
-- Key Vault: ~$1
-- Container Instances: ~$5-10
-- Logic Apps: ~$1
+- Storage Account: ~$2-5 (depending on data retention)
+- Container Instances: ~$5-10 (billed per execution)
+- Communication Services: ~$1-3 (email volume dependent)
 
 **API costs:**
-- OpenAI: ~$10-20 (depending on usage)
-- NewsAPI: Free tier available
+- OpenAI: ~$10-20 (depending on usage and model choice)
+- NewsAPI: Free tier available (1000 requests/day)
 - Reddit API: Free
 
-**Total: ~$20-35/month**
+**GitHub Actions:**
+- Free for public repositories
+- GitHub Actions minutes included in most plans
+
+**Total: ~$18-38/month** (primarily OpenAI usage)
 
 ## 🔧 Local Development
 
@@ -347,8 +408,17 @@ az container start --resource-group skillradar-rg --name skillradar-dev-aci
 # Install .NET 8.0
 dotnet --version
 
-# Set environment variables
-export OPENAI_API_KEY="your-key"
+# Create .env file in project root (optional, for local testing)
+cat > .env << EOF
+OPENAI_API_KEY=your-openai-api-key
+NEWS_API_KEY=your-newsapi-key
+REDDIT_CLIENT_ID=your-reddit-client-id
+REDDIT_CLIENT_SECRET=your-reddit-client-secret
+AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...
+AZURE_COMMUNICATION_CONNECTION_STRING=endpoint=https://...;accesskey=...
+EMAIL_SENDER_ADDRESS=DoNotReply@yourdomain.azurecomm.net
+EMAIL_RECIPIENT_ADDRESS=your-email@domain.com
+EOF
 ```
 
 ### Run with Debug
@@ -357,16 +427,10 @@ cd src/SkillRadar.Console
 dotnet run --debug
 ```
 
-### Test Individual Services
+### Test Data Sources
 ```bash
-# Test news collection only
-dotnet run -- --collect-only
-
-# Test analysis only  
-dotnet run -- --analyze-only
-
-# Generate report only
-dotnet run -- --report-only
+# Test individual data sources and see sample output
+dotnet run -- --debug-sources
 ```
 
 ## 🤝 Contributing
