@@ -24,8 +24,8 @@ namespace SkillRadar.Console
             System.Console.WriteLine("================================================");
             System.Console.WriteLine();
 
-            // Load environment variables from Key Vault (if available) and .env file
-            await EnvironmentLoader.LoadAsync();
+            // Load environment variables from .env file
+            EnvironmentLoader.LoadFromFile();
             System.Console.WriteLine();
 
             // Initialize Email Notification service first to use in error handling
