@@ -266,8 +266,11 @@ namespace SkillRadar.Console.Services
             html.AppendLine("<h2>🔥 Trending Technologies This Week</h2>");
             html.AppendLine("<p style='color: #718096; margin-bottom: 25px; font-size: 14px;'>Most mentioned technologies across 290+ articles from leading tech sources</p>");
             
-            var maxCount = report.TopTrends.Take(5).Max(t => t.MentionCount);
-            foreach (var (trend, index) in report.TopTrends.Take(5).Select((t, i) => (t, i)))
+            var topTrendsToShow = report.TopTrends.Take(5).ToList();
+            if (topTrendsToShow.Any())
+            {
+                var maxCount = topTrendsToShow.Max(t => t.MentionCount);
+                foreach (var (trend, index) in topTrendsToShow.Select((t, i) => (t, i)))
             {
                 var percentage = (double)trend.MentionCount / maxCount * 100;
                 var barColor = index switch
@@ -287,6 +290,11 @@ namespace SkillRadar.Console.Services
                 html.AppendLine($"<div style='background: linear-gradient(90deg, {barColor}, {barColor}aa); height: 100%; width: {percentage}%; transition: width 0.3s ease;'></div>");
                 html.AppendLine("</div>");
                 html.AppendLine("</div>");
+                }
+            }
+            else
+            {
+                html.AppendLine("<p style='color: #718096; text-align: center; padding: 20px;'>No trending technologies identified for this week.</p>");
             }
             html.AppendLine("</div>");
             
