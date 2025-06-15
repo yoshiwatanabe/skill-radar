@@ -71,7 +71,10 @@ namespace SkillRadar.Console.Services
                 await WaitForEmailDeliveryAsync(operation, "weekly report");
                 
                 System.Console.WriteLine($"✅ Email sent and processed successfully! Message ID: {operation.Id}");
-                System.Console.WriteLine($"📧 Status: {operation.Value.Status}");
+                if (operation.HasValue)
+                {
+                    System.Console.WriteLine($"📧 Status: {operation.Value.Status}");
+                }
                 
                 return true;
             }
@@ -132,7 +135,10 @@ namespace SkillRadar.Console.Services
                 await WaitForEmailDeliveryAsync(operation, "error notification");
                 
                 System.Console.WriteLine($"✅ Error notification sent and processed successfully! Message ID: {operation.Id}");
-                System.Console.WriteLine($"📧 Status: {operation.Value.Status}");
+                if (operation.HasValue)
+                {
+                    System.Console.WriteLine($"📧 Status: {operation.Value.Status}");
+                }
                 
                 return true;
             }
@@ -164,10 +170,8 @@ namespace SkillRadar.Console.Services
                     else
                     {
                         System.Console.WriteLine($"⚠️  {emailType} email status: {result.Status}");
-                        if (!string.IsNullOrEmpty(result.Error?.Message))
-                        {
-                            System.Console.WriteLine($"📝 Error details: {result.Error.Message}");
-                        }
+                        // Note: EmailSendResult may not have detailed error information
+                        // Status should indicate success/failure
                     }
                 }
                 else
