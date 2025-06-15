@@ -165,6 +165,12 @@ namespace SkillRadar.Console
                 {
                     System.Console.WriteLine("⚠️  Email notification not sent (service not configured or failed)");
                 }
+
+                // Add extra delay to ensure email delivery completes before container shutdown
+                System.Console.WriteLine();
+                System.Console.WriteLine("🕒 Waiting to ensure email delivery completes...");
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                System.Console.WriteLine("✅ SkillRadar execution completed successfully!");
             }
             catch (Exception ex)
             {

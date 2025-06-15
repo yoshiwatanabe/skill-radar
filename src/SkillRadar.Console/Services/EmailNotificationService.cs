@@ -48,10 +48,11 @@ namespace SkillRadar.Console.Services
                 return false;
             }
 
+            var subject = $"SkillRadar Weekly Analysis - {report.WeekStart:MMM d} to {report.WeekEnd:MMM d, yyyy}";
+            var htmlBody = await GenerateEmailHtmlAsync(report, articles, secondaryLanguage);
+
             try
             {
-                var subject = $"SkillRadar Weekly Analysis - {report.WeekStart:MMM d} to {report.WeekEnd:MMM d, yyyy}";
-                var htmlBody = await GenerateEmailHtmlAsync(report, articles, secondaryLanguage);
 
                 var emailMessage = new EmailMessage(
                     senderAddress: _senderAddress,
@@ -63,15 +64,42 @@ namespace SkillRadar.Console.Services
 
                 System.Console.WriteLine($"📧 Sending weekly report email to {_recipientAddress}...");
                 
-                var operation = await _emailClient.SendAsync(WaitUntil.Started, emailMessage);
+                // Wait for email to be fully processed by Azure Communication Services
+                var operation = await _emailClient.SendAsync(WaitUntil.Completed, emailMessage);
                 
-                System.Console.WriteLine($"✅ Email sent successfully! Message ID: {operation.Id}");
+                // Additional verification of the operation status
+                await WaitForEmailDeliveryAsync(operation, "weekly report");
+                
+                System.Console.WriteLine($"✅ Email sent and processed successfully! Message ID: {operation.Id}");
+                System.Console.WriteLine($"📧 Status: {operation.Value.Status}");
+                
                 return true;
             }
             catch (Exception ex)
             {
-                System.Console.WriteLine($"❌ Failed to send email: {ex.Message}");
-                return false;
+                System.Console.WriteLine($"❌ Failed to send weekly report email: {ex.Message}");
+                
+                // Retry once with a delay
+                System.Console.WriteLine("🔄 Retrying email send in 10 seconds...");
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                
+                try
+                {
+                    System.Console.WriteLine("📧 Attempting to resend weekly report email...");
+                    var retryOperation = await _emailClient.SendAsync(WaitUntil.Completed, new EmailMessage(
+                        senderAddress: _senderAddress,
+                        content: new EmailContent(subject) { Html = htmlBody },
+                        recipients: new EmailRecipients(new List<EmailAddress> { new EmailAddress(_recipientAddress) })));
+                    
+                    await WaitForEmailDeliveryAsync(retryOperation, "weekly report (retry)");
+                    System.Console.WriteLine($"✅ Weekly report email sent successfully on retry! Message ID: {retryOperation.Id}");
+                    return true;
+                }
+                catch (Exception retryEx)
+                {
+                    System.Console.WriteLine($"❌ Retry also failed: {retryEx.Message}");
+                    return false;
+                }
             }
         }
 
@@ -95,14 +123,65 @@ namespace SkillRadar.Console.Services
                     },
                     recipients: new EmailRecipients(new List<EmailAddress> { new EmailAddress(_recipientAddress) }));
 
-                var operation = await _emailClient.SendAsync(WaitUntil.Started, emailMessage);
-                System.Console.WriteLine($"✅ Error notification sent! Message ID: {operation.Id}");
+                System.Console.WriteLine($"📧 Sending error notification email to {_recipientAddress}...");
+                
+                // Wait for email to be fully processed by Azure Communication Services
+                var operation = await _emailClient.SendAsync(WaitUntil.Completed, emailMessage);
+                
+                // Additional verification of the operation status
+                await WaitForEmailDeliveryAsync(operation, "error notification");
+                
+                System.Console.WriteLine($"✅ Error notification sent and processed successfully! Message ID: {operation.Id}");
+                System.Console.WriteLine($"📧 Status: {operation.Value.Status}");
+                
                 return true;
             }
             catch (Exception ex)
             {
                 System.Console.WriteLine($"❌ Failed to send error notification: {ex.Message}");
                 return false;
+            }
+        }
+
+        private async Task WaitForEmailDeliveryAsync(Azure.Operation<EmailSendResult> operation, string emailType)
+        {
+            try
+            {
+                // Give additional time for email processing
+                System.Console.WriteLine($"🕒 Waiting for {emailType} email processing to complete...");
+                await Task.Delay(TimeSpan.FromSeconds(5));
+                
+                // Check if operation completed successfully
+                if (operation.HasCompleted)
+                {
+                    var result = operation.Value;
+                    System.Console.WriteLine($"📊 Email operation completed with status: {result.Status}");
+                    
+                    if (result.Status == EmailSendStatus.Succeeded)
+                    {
+                        System.Console.WriteLine($"🎉 {emailType} email delivered successfully!");
+                    }
+                    else
+                    {
+                        System.Console.WriteLine($"⚠️  {emailType} email status: {result.Status}");
+                        if (!string.IsNullOrEmpty(result.Error?.Message))
+                        {
+                            System.Console.WriteLine($"📝 Error details: {result.Error.Message}");
+                        }
+                    }
+                }
+                else
+                {
+                    System.Console.WriteLine($"⏳ {emailType} email operation still in progress...");
+                }
+                
+                // Additional delay to ensure delivery
+                System.Console.WriteLine("🕒 Adding extra delay to ensure email delivery...");
+                await Task.Delay(TimeSpan.FromSeconds(3));
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"⚠️  Could not verify {emailType} email delivery status: {ex.Message}");
             }
         }
 
